@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.expo/
+web-build/
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+backend/gateway/prisma/*.db
+
+# AI agent tool configs (not project code)
+.claude/
+CLAUDE.md
+AGENTS.md

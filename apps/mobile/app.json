@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "name": "Netrak",
+    "slug": "netrak",
+    "scheme": "netrak",
+    "plugins": ["expo-router"]
+  }
+}
