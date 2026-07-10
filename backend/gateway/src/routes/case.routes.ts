@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { CaseController } from '../controllers/case.controller';
+import { EvidenceController } from '../controllers/evidence.controller';
 import { validate } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
 import { createCaseSchema, updateCaseSchema } from '../dto/case.dto';
+import { createEvidenceSchema } from '../dto/evidence.dto';
 
 const router = Router();
 const caseController = new CaseController();
+const evidenceController = new EvidenceController();
 
 router.use(authenticate);
 
@@ -123,5 +126,45 @@ router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
  *         description: Deleted successfully
  */
 router.delete('/:id', caseController.deleteCase);
+
+/**
+ * @swagger
+ * /cases/{id}/evidence:
+ *   post:
+ *     summary: Add evidence to a case
+ *     tags: [Cases]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - label
+ *               - reference
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [audio, image, video, document, chat, link, note]
+ *               label:
+ *                 type: string
+ *               reference:
+ *                 type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Evidence added successfully
+ */
+router.post('/:id/evidence', validate(createEvidenceSchema), evidenceController.addEvidence);
 
 export default router;

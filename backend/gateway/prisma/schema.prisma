@@ -13,6 +13,9 @@ model User {
   email     String   @unique
   password  String
   role      String   @default("CITIZEN")
+  name      String?
+  phone     String?
+  district  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -25,10 +28,36 @@ model Case {
   title       String
   description String
   status      String   @default("OPEN")
+  category    String?
+  riskLevel   String?
+  location    String?
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  evidence CaseEvidence[]
+  timeline CaseTimelineEvent[]
+}
+
+model CaseEvidence {
+  id        String   @id @default(uuid())
+  type      String
+  label     String
+  reference String
+  notes     String?
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model CaseTimelineEvent {
+  id        String   @id @default(uuid())
+  title     String
+  detail    String
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Notification {
@@ -38,4 +67,16 @@ model Notification {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Threat {
+  id         String   @id @default(uuid())
+  title      String
+  category   String
+  level      String
+  region     String
+  summary    String
+  indicators Json
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
 }

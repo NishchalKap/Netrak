@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { validate } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
-import { loginSchema, registerSchema } from '../dto/auth.dto';
+import { loginSchema, registerSchema, updateProfileSchema, forgotPasswordSchema } from '../dto/auth.dto';
 
 const router = Router();
 const authController = new AuthController();
@@ -97,5 +97,55 @@ router.post('/refresh', authController.refresh);
  *         description: Profile retrieved successfully
  */
 router.get('/profile', authenticate, authController.profile);
+
+/**
+ * @swagger
+ * /auth/profile:
+ *   patch:
+ *     summary: Update current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               district:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+router.patch('/profile', authenticate, validate(updateProfileSchema), authController.updateProfile);
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Trigger password reset flow
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset link queued successfully
+ */
+router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 
 export default router;
