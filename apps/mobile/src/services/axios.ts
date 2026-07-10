@@ -1,7 +1,7 @@
-import axios from 'axios';
+import { create } from 'axios';
 import { API_URL, TIMEOUT } from './config';
 
-export const axiosInstance = axios.create({
+export const axiosInstance = create({
   baseURL: API_URL,
   timeout: TIMEOUT,
   headers: {

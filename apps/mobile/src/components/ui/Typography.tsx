@@ -1,8 +1,9 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
+import { Colors } from '@/constants';
 
 interface TypographyProps extends TextProps {
-  variant?: 'h1' | 'h2' | 'body' | 'caption';
+  variant?: 'h1' | 'h2' | 'h3' | 'body' | 'caption';
 }
 
 export const Typography = ({ variant = 'body', style, ...props }: TypographyProps) => {
@@ -10,8 +11,9 @@ export const Typography = ({ variant = 'body', style, ...props }: TypographyProp
 };
 
 const styles = StyleSheet.create({
-  h1: { fontSize: 32, fontWeight: 'bold', marginBottom: 16 },
-  h2: { fontSize: 24, fontWeight: '600', marginBottom: 12 },
-  body: { fontSize: 16, color: '#333' },
-  caption: { fontSize: 12, color: '#666' },
+  h1: { color: Colors.light.text, fontSize: 30, fontWeight: '800', marginBottom: 12 },
+  h2: { color: Colors.light.text, fontSize: 23, fontWeight: '700', marginBottom: 10 },
+  h3: { color: Colors.light.text, fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  body: { color: Colors.light.text, fontSize: 16, lineHeight: 22 },
+  caption: { color: Colors.light.muted, fontSize: 12, lineHeight: 17 },
 });

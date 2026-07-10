@@ -1,9 +1,12 @@
 import { apiClient } from './apiClient';
+import { Case, CreateCaseInput, UpdateCaseInput } from '@/types';
+
+type BackendCreateCaseInput = Pick<CreateCaseInput, 'title' | 'description'>;
 
 export const caseApi = {
-  getCases: () => apiClient.get('/cases'),
-  getCaseById: (id: string) => apiClient.get(`/cases/${id}`),
-  createCase: (data: any) => apiClient.post('/cases', data),
-  updateCase: (id: string, data: any) => apiClient.patch(`/cases/${id}`, data),
-  deleteCase: (id: string) => apiClient.delete(`/cases/${id}`),
+  getCases: () => apiClient.get<Case[]>('/cases'),
+  getCaseById: (id: string) => apiClient.get<Case>(`/cases/${id}`),
+  createCase: (data: BackendCreateCaseInput) => apiClient.post<Case, BackendCreateCaseInput>('/cases', data),
+  updateCase: (id: string, data: UpdateCaseInput) => apiClient.patch<Case, UpdateCaseInput>(`/cases/${id}`, data),
+  deleteCase: (id: string) => apiClient.delete<null>(`/cases/${id}`),
 };

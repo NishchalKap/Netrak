@@ -17,7 +17,7 @@ function RootLayoutInner() {
 
   useEffect(() => {
     hydrate();
-  }, []);
+  }, [hydrate]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -42,7 +42,7 @@ function RootLayoutInner() {
     } else if (!isAuthenticated && !inAuthGroup && !isIndex) {
       router.replace('/(auth)/login');
     }
-  }, [isHydrated, isNavigationReady, isAuthenticated, segments]);
+  }, [isHydrated, isNavigationReady, isAuthenticated, router, segments]);
 
   return (
     <PaperProvider theme={paperTheme}>

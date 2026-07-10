@@ -1,12 +1,32 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, ViewProps, View } from 'react-native';
+import { SafeAreaView, StyleSheet, ViewProps, View, ScrollView, StyleProp, ViewStyle } from 'react-native';
+import { Colors } from '@/constants';
 
-export const ScreenContainer = ({ children, style, ...props }: ViewProps) => {
+interface ScreenContainerProps extends ViewProps {
+  scroll?: boolean;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+}
+
+export const ScreenContainer = ({ children, style, scroll, contentContainerStyle, ...props }: ScreenContainerProps) => {
+  const content = (
+    <View style={[styles.container, style]} {...props}>
+      {children}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={[styles.container, style]} {...props}>
-        {children}
-      </View>
+      {scroll ? (
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+        >
+          {content}
+        </ScrollView>
+      ) : (
+        content
+      )}
     </SafeAreaView>
   );
 };
@@ -14,10 +34,13 @@ export const ScreenContainer = ({ children, style, ...props }: ViewProps) => {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.light.background,
   },
   container: {
     flex: 1,
     padding: 16,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
 });
