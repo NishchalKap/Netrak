@@ -17,12 +17,23 @@ router.use(authenticate);
  * /cases:
  *   get:
  *     summary: Get all cases
+ *     description: Retrieves a list of all cases reported in the system.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of cases
+ *         description: List of cases retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CaseListResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.get('/', caseController.getCases);
 
@@ -31,6 +42,7 @@ router.get('/', caseController.getCases);
  * /cases:
  *   post:
  *     summary: Create a new case
+ *     description: Creates a new case reported by a citizen.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -39,18 +51,26 @@ router.get('/', caseController.getCases);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - title
- *               - description
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
+ *             $ref: '#/components/schemas/CaseCreateRequest'
  *     responses:
  *       201:
- *         description: Created
+ *         description: Case created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CaseResponse'
+ *       400:
+ *         description: Validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/', validate(createCaseSchema), caseController.createCase);
 
@@ -58,7 +78,8 @@ router.post('/', validate(createCaseSchema), caseController.createCase);
  * @swagger
  * /cases/{id}:
  *   get:
- *     summary: Get case by id
+ *     summary: Get case by ID
+ *     description: Retrieves the detailed records, evidence list, and status timeline for a specific case ID.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -68,9 +89,27 @@ router.post('/', validate(createCaseSchema), caseController.createCase);
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         description: Unique UUID identifier for the case
  *     responses:
  *       200:
- *         description: Case detail
+ *         description: Case retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CaseResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Case not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.get('/:id', caseController.getCaseById);
 
@@ -78,7 +117,8 @@ router.get('/:id', caseController.getCaseById);
  * @swagger
  * /cases/{id}:
  *   patch:
- *     summary: Update case by id
+ *     summary: Update case status or details
+ *     description: Updates case details or transitions case status through its lifecycle.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -88,22 +128,39 @@ router.get('/:id', caseController.getCaseById);
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         description: Unique UUID identifier for the case
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               status:
- *                 type: string
+ *             $ref: '#/components/schemas/CaseUpdateRequest'
  *     responses:
  *       200:
- *         description: Updated case
+ *         description: Case updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CaseResponse'
+ *       400:
+ *         description: Validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Case not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
 
@@ -112,6 +169,7 @@ router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
  * /cases/{id}:
  *   delete:
  *     summary: Delete case
+ *     description: Deletes a case from the system database.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -121,9 +179,27 @@ router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         description: Unique UUID identifier for the case
  *     responses:
- *       204:
- *         description: Deleted successfully
+ *       200:
+ *         description: Case deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Case not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.delete('/:id', caseController.deleteCase);
 
@@ -131,7 +207,8 @@ router.delete('/:id', caseController.deleteCase);
  * @swagger
  * /cases/{id}/evidence:
  *   post:
- *     summary: Add evidence to a case
+ *     summary: Upload case evidence metadata
+ *     description: Associates uploaded files or references with a case ID.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -141,29 +218,39 @@ router.delete('/:id', caseController.deleteCase);
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
+ *         description: Case UUID identifier to associate evidence with
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - type
- *               - label
- *               - reference
- *             properties:
- *               type:
- *                 type: string
- *                 enum: [audio, image, video, document, chat, link, note]
- *               label:
- *                 type: string
- *               reference:
- *                 type: string
- *               notes:
- *                 type: string
+ *             $ref: '#/components/schemas/EvidenceCreateRequest'
  *     responses:
  *       201:
- *         description: Evidence added successfully
+ *         description: Evidence uploaded and linked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EvidenceResponse'
+ *       400:
+ *         description: Validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Case not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/:id/evidence', validate(createEvidenceSchema), evidenceController.addEvidence);
 

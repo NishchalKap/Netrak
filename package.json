@@ -1,0 +1,15 @@
+{
+  "name": "netrak",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Netrak public safety platform",
+  "scripts": {
+    "install:gateway": "npm install --prefix backend/gateway",
+    "prisma:generate": "cd backend/gateway && npx prisma generate",
+    "lint": "npm run lint --prefix backend/gateway",
+    "typecheck": "npm run typecheck --prefix backend/gateway",
+    "build": "npm run build --prefix backend/gateway",
+    "dev": "npm run dev --prefix backend/gateway",
+    "start": "npm run start --prefix backend/gateway"
+  }
+}

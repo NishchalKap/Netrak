@@ -13,13 +13,24 @@ router.use(authenticate);
  * @swagger
  * /notifications:
  *   get:
- *     summary: Get all notifications
+ *     summary: Get notifications list
+ *     description: Retrieves all notifications sent to users in the platform.
  *     tags: [Notifications]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of notifications
+ *         description: List of notifications retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationListResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.get('/', notificationController.getNotifications);
 
@@ -27,7 +38,8 @@ router.get('/', notificationController.getNotifications);
  * @swagger
  * /notifications:
  *   post:
- *     summary: Create a notification
+ *     summary: Create custom notification
+ *     description: Sends a system alert notification targeting a specific user.
  *     tags: [Notifications]
  *     security:
  *       - bearerAuth: []
@@ -36,18 +48,26 @@ router.get('/', notificationController.getNotifications);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - message
- *               - userId
- *             properties:
- *               message:
- *                 type: string
- *               userId:
- *                 type: string
+ *             $ref: '#/components/schemas/NotificationCreateRequest'
  *     responses:
  *       201:
- *         description: Created
+ *         description: Notification generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
+ *       400:
+ *         description: Validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/', validate(createNotificationSchema), notificationController.createNotification);
 

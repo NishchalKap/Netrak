@@ -49,7 +49,7 @@ export class CaseController {
   deleteCase = async (req: Request, res: Response, next: NextFunction) => {
     try {
       await this.caseService.deleteCase(req.params.id as string);
-      sendSuccess(res, null, 'Case deleted successfully', 204);
+      sendSuccess(res, null, 'Case deleted successfully', 200);
     } catch (error) {
       next(error);
     }

@@ -11,25 +11,29 @@ const authController = new AuthController();
  * @swagger
  * /auth/login:
  *   post:
- *     summary: Login to the application
+ *     summary: Log in with credentials
+ *     description: Authenticates a citizen or officer and returns a JWT token.
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthTokenResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/login', validate(loginSchema), authController.login);
 
@@ -37,27 +41,29 @@ router.post('/login', validate(loginSchema), authController.login);
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Register a new user
+ *     summary: Register a new account
+ *     description: Registers a new user with a specific role.
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               role:
- *                 type: string
+ *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
  *         description: Registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthTokenResponse'
+ *       400:
+ *         description: Email already exists or validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
  */
 router.post('/register', validate(registerSchema), authController.register);
 
@@ -65,22 +71,29 @@ router.post('/register', validate(registerSchema), authController.register);
  * @swagger
  * /auth/refresh:
  *   post:
- *     summary: Refresh token
+ *     summary: Refresh JWT token
+ *     description: Generates a new short-lived JWT authentication token using an existing token.
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - token
- *             properties:
- *               token:
- *                 type: string
+ *             $ref: '#/components/schemas/RefreshTokenRequest'
  *     responses:
  *       200:
- *         description: Token refreshed
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefreshTokenResponse'
+ *       401:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/refresh', authController.refresh);
 
@@ -88,13 +101,24 @@ router.post('/refresh', authController.refresh);
  * @swagger
  * /auth/profile:
  *   get:
- *     summary: Get current user profile
+ *     summary: Get user profile
+ *     description: Retrieves profile details of the currently authenticated user.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.get('/profile', authenticate, authController.profile);
 
@@ -102,7 +126,8 @@ router.get('/profile', authenticate, authController.profile);
  * @swagger
  * /auth/profile:
  *   patch:
- *     summary: Update current user profile
+ *     summary: Update profile details
+ *     description: Updates personal/jurisdiction details of the currently authenticated user.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -111,17 +136,20 @@ router.get('/profile', authenticate, authController.profile);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               phone:
- *                 type: string
- *               district:
- *                 type: string
+ *             $ref: '#/components/schemas/ProfileUpdateRequest'
  *     responses:
  *       200:
  *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.patch('/profile', authenticate, validate(updateProfileSchema), authController.updateProfile);
 
@@ -129,22 +157,23 @@ router.patch('/profile', authenticate, validate(updateProfileSchema), authContro
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Trigger password reset flow
+ *     summary: Trigger password reset link
+ *     description: Triggers a password reset workflow. In development, logs the generated token to console.
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
  *     responses:
  *       200:
- *         description: Reset link queued successfully
+ *         description: Reset request queued successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ForgotPasswordResponse'
  */
 router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 
