@@ -1,0 +1,46 @@
+table,column,data_type,nullable,default,primary_key,foreign_key,references,notes
+profiles,id,uuid,false,,true,true,"auth.users(id) ON DELETE CASCADE","Maps 1:1 to Supabase Auth user (auth.uid())"
+profiles,email,text,true,,false,false,,"Unique email for convenience/lookup"
+profiles,role,user_role,false,"'CITIZEN'",false,false,,"Enum: CITIZEN | OFFICER | ADMIN"
+profiles,name,text,true,,false,false,,
+profiles,phone,text,true,,false,false,,
+profiles,district,text,true,,false,false,,
+profiles,created_at,timestamptz,false,now(),false,false,,
+profiles,updated_at,timestamptz,false,now(),false,false,,"Auto-updated via trigger"
+cases,id,uuid,false,gen_random_uuid(),true,false,,
+cases,title,text,false,,false,false,,
+cases,description,text,false,,false,false,,
+cases,status,case_status,false,"'OPEN'",false,false,,"Enum: OPEN | IN_PROGRESS | ESCALATED | CLOSED"
+cases,category,text,true,,false,false,,
+cases,risk_level,text,true,,false,false,,
+cases,location,text,true,,false,false,,
+cases,user_id,uuid,false,,false,true,profiles(id) ON DELETE RESTRICT,"Case owner (creator)"
+cases,created_at,timestamptz,false,now(),false,false,,
+cases,updated_at,timestamptz,false,now(),false,false,,"Auto-updated via trigger"
+case_evidence,id,uuid,false,gen_random_uuid(),true,false,,
+case_evidence,case_id,uuid,false,,false,true,cases(id) ON DELETE CASCADE,"Parent case"
+case_evidence,type,evidence_type,false,,false,false,,"Enum: audio | image | video | document | chat | link | note"
+case_evidence,label,text,false,,false,false,,
+case_evidence,reference,text,false,,false,false,,"URI/path/filename reference for the evidence file"
+case_evidence,notes,text,true,,false,false,,
+case_evidence,created_at,timestamptz,false,now(),false,false,,
+case_timeline_events,id,uuid,false,gen_random_uuid(),true,false,,
+case_timeline_events,case_id,uuid,false,,false,true,cases(id) ON DELETE CASCADE,"Parent case"
+case_timeline_events,title,text,false,,false,false,,
+case_timeline_events,detail,text,false,,false,false,,
+case_timeline_events,created_at,timestamptz,false,now(),false,false,,
+notifications,id,uuid,false,gen_random_uuid(),true,false,,
+notifications,user_id,uuid,false,,false,true,profiles(id) ON DELETE CASCADE,"Notification recipient"
+notifications,message,text,false,,false,false,,
+notifications,read,boolean,false,false,false,false,,"Client can mark as read"
+notifications,created_at,timestamptz,false,now(),false,false,,
+threats,id,uuid,false,gen_random_uuid(),true,false,,
+threats,title,text,false,,false,false,,
+threats,category,text,false,,false,false,,
+threats,level,text,false,,false,false,,
+threats,region,text,false,,false,false,,
+threats,summary,text,false,,false,false,,
+threats,indicators,jsonb,false,"[]",false,false,,"Array of indicators (strings) stored as JSON"
+threats,created_at,timestamptz,false,now(),false,false,,
+threats,updated_at,timestamptz,false,now(),false,false,,"Auto-updated via trigger"
+
