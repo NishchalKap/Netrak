@@ -1,271 +1,174 @@
 import { create } from 'zustand';
 import { caseApi } from '@/services/caseApi';
 import { Case, CreateCaseInput, Evidence, UpdateCaseInput } from '../types';
+import { getApiErrorMessage } from '@/services/apiError';
 import { makeLocalId } from '@/utils';
+import { useUserStore } from './userStore';
+
+type DataSource = 'idle' | 'online' | 'cached';
 
 interface CaseState {
   cases: Case[];
   selectedCase: Case | null;
   isLoading: boolean;
+  isMutating: boolean;
   error: string | null;
+  mutationError: string | null;
   lastSyncedAt: string | null;
-  setCases: (cases: Case[]) => void;
-  fetchCases: () => Promise<Case[]>;
+  source: DataSource;
+  fetchCases: (force?: boolean) => Promise<Case[]>;
   fetchCaseById: (id: string) => Promise<Case | null>;
-  createCase: (input: CreateCaseInput) => Promise<Case>;
+  createCase: (input: CreateCaseInput) => Promise<Case | null>;
   updateCase: (id: string, input: UpdateCaseInput) => Promise<Case | null>;
-  addEvidence: (caseId: string, evidence: Omit<Evidence, 'id' | 'createdAt'>) => Evidence | null;
+  deleteCase: (id: string) => Promise<boolean>;
+  addEvidence: (caseId: string, evidence: Omit<Evidence, 'id' | 'createdAt'>) => Promise<Evidence | null>;
   clearError: () => void;
 }
 
+let casesRequest: Promise<Case[]> | null = null;
+
 export const useCaseStore = create<CaseState>((set, get) => ({
-  cases: seedCases,
+  cases: [],
   selectedCase: null,
   isLoading: false,
+  isMutating: false,
   error: null,
+  mutationError: null,
   lastSyncedAt: null,
-  setCases: (cases) => set({ cases: cases.map(normalizeCase), lastSyncedAt: new Date().toISOString() }),
-  fetchCases: async () => {
+  source: 'idle',
+  fetchCases: async (_force = false) => {
+    if (casesRequest) return casesRequest;
     set({ isLoading: true, error: null });
-    try {
-      const cases = (await caseApi.getCases()).map(normalizeCase);
-      set({ cases, isLoading: false, lastSyncedAt: new Date().toISOString() });
-      return cases;
-    } catch (error) {
-      set((state) => ({
-        cases: state.cases.length ? state.cases : seedCases,
-        isLoading: false,
-        error: getCaseErrorMessage(error),
-      }));
-      return get().cases;
-    }
+    casesRequest = caseApi.getCases()
+      .then(async (items) => {
+        const profile = useUserStore.getState().profile ?? await useUserStore.getState().fetchProfile();
+        const visibleItems = profile?.role === 'CITIZEN'
+          ? items.filter((item) => item.userId === profile.id)
+          : items;
+        const cases = visibleItems.map(normalizeCase);
+        set({ cases, isLoading: false, source: 'online', lastSyncedAt: new Date().toISOString() });
+        return cases;
+      })
+      .catch((error) => {
+        const cached = get().cases;
+        set({ isLoading: false, source: cached.length ? 'cached' : 'idle', error: getApiErrorMessage(error, 'Cases are unavailable. Pull to retry.') });
+        return cached;
+      })
+      .finally(() => { casesRequest = null; });
+    return casesRequest;
   },
   fetchCaseById: async (id) => {
-    const cached = get().cases.find((caseItem) => caseItem.id === id) ?? null;
-    set({ selectedCase: cached, error: null });
-
+    const cached = get().cases.find((item) => item.id === id) ?? null;
+    set({ selectedCase: cached, isLoading: !cached, error: null });
     try {
-      const remoteCase = normalizeCase(await caseApi.getCaseById(id));
-      set((state) => ({
-        selectedCase: remoteCase,
-        cases: upsertCase(state.cases, remoteCase),
-      }));
-      return remoteCase;
-    } catch {
+      const remote = normalizeCase(await caseApi.getCaseById(id));
+      const profile = useUserStore.getState().profile ?? await useUserStore.getState().fetchProfile();
+      if (profile?.role === 'CITIZEN' && remote.userId !== profile.id) {
+        throw new Error('This case is not available to your account.');
+      }
+      set((state) => ({ selectedCase: remote, cases: upsertCase(state.cases, remote), isLoading: false, source: 'online', lastSyncedAt: new Date().toISOString() }));
+      return remote;
+    } catch (error) {
+      set({ isLoading: false, source: cached ? 'cached' : 'idle', error: getApiErrorMessage(error, 'This case could not be loaded.') });
       return cached;
     }
   },
   createCase: async (input) => {
-    set({ isLoading: true, error: null });
+    set({ isMutating: true, mutationError: null });
     try {
-      const remoteCase = normalizeCase(
-        await caseApi.createCase({
-          title: input.title,
-          description: input.description,
-        })
-      );
-      const createdCase = enrichCase(remoteCase, input);
-      set((state) => ({
-        cases: [createdCase, ...state.cases],
-        selectedCase: createdCase,
-        isLoading: false,
-      }));
-      return createdCase;
+      const remote = normalizeCase(await caseApi.createCase({ title: input.title, description: input.description }));
+      const created = { ...remote, category: input.category ?? remote.category, location: input.location ?? remote.location, riskLevel: input.riskLevel ?? remote.riskLevel };
+      set((state) => ({ cases: upsertCase(state.cases, created), selectedCase: created, isMutating: false, source: 'online' }));
+      return created;
     } catch (error) {
-      const localCase = createLocalCase(input);
-      set((state) => ({
-        cases: [localCase, ...state.cases],
-        selectedCase: localCase,
-        isLoading: false,
-        error: getCaseErrorMessage(error),
-      }));
-      return localCase;
+      set({ isMutating: false, mutationError: getApiErrorMessage(error, 'Your report could not be submitted. Nothing was saved.') });
+      return null;
     }
   },
   updateCase: async (id, input) => {
-    const current = get().cases.find((caseItem) => caseItem.id === id);
-    if (!current) return null;
-
+    const current = get().cases.find((item) => item.id === id) ?? get().selectedCase;
+    if (!current || current.id !== id) return null;
+    const optimistic = { ...current, ...input, updatedAt: new Date().toISOString() };
+    set((state) => ({ cases: upsertCase(state.cases, optimistic), selectedCase: optimistic, isMutating: true, mutationError: null }));
     try {
-      const remoteCase = normalizeCase(await caseApi.updateCase(id, input));
-      const updatedCase = { ...current, ...remoteCase, ...input, updatedAt: new Date().toISOString() };
-      set((state) => ({
-        cases: upsertCase(state.cases, updatedCase),
-        selectedCase: updatedCase,
-      }));
-      return updatedCase;
-    } catch {
-      const updatedCase = { ...current, ...input, updatedAt: new Date().toISOString() };
-      set((state) => ({
-        cases: upsertCase(state.cases, updatedCase),
-        selectedCase: updatedCase,
-      }));
-      return updatedCase;
+      const remote = normalizeCase(await caseApi.updateCase(id, input));
+      set((state) => ({ cases: upsertCase(state.cases, remote), selectedCase: remote, isMutating: false, source: 'online' }));
+      return remote;
+    } catch (error) {
+      set((state) => ({ cases: upsertCase(state.cases, current), selectedCase: current, isMutating: false, mutationError: getApiErrorMessage(error, 'The case update was not saved.') }));
+      return null;
     }
   },
-  addEvidence: (caseId, evidenceInput) => {
-    const existingCase = get().cases.find((caseItem) => caseItem.id === caseId);
-    if (!existingCase) return null;
-
-    const evidence: Evidence = {
-      ...evidenceInput,
-      id: makeLocalId('evidence'),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedCase: Case = {
-      ...existingCase,
-      evidence: [evidence, ...(existingCase.evidence ?? [])],
-      timeline: [
-        {
-          id: makeLocalId('timeline'),
-          title: 'Evidence added',
-          detail: evidence.label,
-          createdAt: evidence.createdAt,
-        },
-        ...(existingCase.timeline ?? []),
-      ],
-      updatedAt: evidence.createdAt,
-    };
-
-    set((state) => ({
-      cases: upsertCase(state.cases, updatedCase),
-      selectedCase: updatedCase,
-    }));
-
-    return evidence;
+  deleteCase: async (id) => {
+    const previous = get().cases;
+    const removed = previous.find((item) => item.id === id) ?? null;
+    if (!removed) return false;
+    set({ cases: previous.filter((item) => item.id !== id), selectedCase: null, isMutating: true, mutationError: null });
+    try {
+      await caseApi.deleteCase(id);
+      set({ isMutating: false });
+      return true;
+    } catch (error) {
+      set({ cases: previous, selectedCase: removed, isMutating: false, mutationError: getApiErrorMessage(error, 'The case was not deleted.') });
+      return false;
+    }
   },
-  clearError: () => set({ error: null }),
+  addEvidence: async (caseId, input) => {
+    set({ isMutating: true, mutationError: null });
+    try {
+      const evidence = await caseApi.addEvidence(caseId, input);
+      const current = get().cases.find((item) => item.id === caseId) ?? get().selectedCase;
+      if (current?.id === caseId) {
+        const updated: Case = {
+          ...current,
+          evidence: [evidence, ...(current.evidence ?? [])],
+          updatedAt: evidence.createdAt,
+        };
+        set((state) => ({ cases: upsertCase(state.cases, updated), selectedCase: updated, isMutating: false, source: 'online' }));
+      } else {
+        set({ isMutating: false });
+      }
+      return evidence;
+    } catch (error) {
+      set({ isMutating: false, mutationError: getApiErrorMessage(error, 'Evidence could not be attached. Nothing was saved.') });
+      return null;
+    }
+  },
+  clearError: () => set({ error: null, mutationError: null }),
 }));
 
-const now = new Date().toISOString();
-
-const seedCases: Case[] = [
-  {
-    id: 'local-case-digital-arrest',
-    title: 'Suspected digital arrest call',
-    description: 'Caller claimed to be from cyber police and demanded a verification transfer.',
-    status: 'IN_PROGRESS',
-    category: 'digital_arrest',
-    riskLevel: 'critical',
-    location: 'Mumbai',
-    createdAt: now,
-    updatedAt: now,
-    evidence: [],
-    timeline: [
-      {
-        id: 'timeline-digital-arrest-opened',
-        title: 'Case opened',
-        detail: 'Complaint captured from citizen dashboard.',
-        createdAt: now,
-      },
-    ],
-  },
-  {
-    id: 'local-case-upi-qr',
-    title: 'QR collect request fraud',
-    description: 'Merchant reported a swapped QR code and two unauthorized collect requests.',
-    status: 'OPEN',
-    category: 'upi_fraud',
-    riskLevel: 'high',
-    location: 'Pune',
-    createdAt: now,
-    updatedAt: now,
-    evidence: [],
-    timeline: [
-      {
-        id: 'timeline-upi-opened',
-        title: 'Report received',
-        detail: 'Awaiting identifier verification.',
-        createdAt: now,
-      },
-    ],
-  },
-];
-
-function normalizeCase(caseItem: Case): Case {
+function normalizeCase(item: Case): Case {
   const timestamp = new Date().toISOString();
-
   return {
-    ...caseItem,
-    status: caseItem.status ?? 'OPEN',
-    riskLevel: caseItem.riskLevel ?? inferRisk(caseItem.title, caseItem.description),
-    category: caseItem.category ?? inferCategory(caseItem.title, caseItem.description),
-    evidence: caseItem.evidence ?? [],
-    timeline:
-      caseItem.timeline ??
-      [
-        {
-          id: makeLocalId('timeline'),
-          title: 'Case created',
-          detail: caseItem.status === 'CLOSED' ? 'Case is marked closed.' : 'Case is ready for review.',
-          createdAt: caseItem.createdAt ?? timestamp,
-        },
-      ],
-    createdAt: caseItem.createdAt ?? timestamp,
-    updatedAt: caseItem.updatedAt ?? timestamp,
+    ...item,
+    status: item.status ?? 'OPEN',
+    riskLevel: item.riskLevel ?? inferRisk(item.title, item.description),
+    category: item.category ?? inferCategory(item.title, item.description),
+    evidence: item.evidence ?? [],
+    timeline: item.timeline ?? [{ id: makeLocalId('timeline'), title: 'Case created', detail: 'Case submitted for review.', createdAt: item.createdAt ?? timestamp }],
+    createdAt: item.createdAt ?? timestamp,
+    updatedAt: item.updatedAt ?? timestamp,
   };
 }
 
-function enrichCase(caseItem: Case, input: CreateCaseInput): Case {
-  return {
-    ...caseItem,
-    category: input.category ?? caseItem.category,
-    location: input.location ?? caseItem.location,
-    riskLevel: input.riskLevel ?? caseItem.riskLevel,
-  };
-}
-
-function createLocalCase(input: CreateCaseInput): Case {
-  const createdAt = new Date().toISOString();
-
-  return {
-    id: makeLocalId('case'),
-    title: input.title,
-    description: input.description,
-    status: input.riskLevel === 'critical' ? 'ESCALATED' : 'OPEN',
-    category: input.category ?? inferCategory(input.title, input.description),
-    riskLevel: input.riskLevel ?? inferRisk(input.title, input.description),
-    location: input.location,
-    evidence: [],
-    timeline: [
-      {
-        id: makeLocalId('timeline'),
-        title: input.riskLevel === 'critical' ? 'Emergency escalation created' : 'Report created',
-        detail: input.description,
-        createdAt,
-      },
-    ],
-    createdAt,
-    updatedAt: createdAt,
-  };
-}
-
-function upsertCase(cases: Case[], nextCase: Case) {
-  const exists = cases.some((caseItem) => caseItem.id === nextCase.id);
-  if (!exists) return [nextCase, ...cases];
-  return cases.map((caseItem) => (caseItem.id === nextCase.id ? nextCase : caseItem));
+function upsertCase(cases: Case[], next: Case) {
+  return cases.some((item) => item.id === next.id) ? cases.map((item) => item.id === next.id ? next : item) : [next, ...cases];
 }
 
 function inferCategory(title: string, description: string) {
   const text = `${title} ${description}`.toLowerCase();
-  if (text.includes('arrest') || text.includes('police')) return 'digital_arrest';
-  if (text.includes('upi') || text.includes('qr')) return 'upi_fraud';
-  if (text.includes('investment') || text.includes('trading')) return 'investment_scam';
-  if (text.includes('note') || text.includes('currency')) return 'counterfeit_currency';
-  if (text.includes('loan')) return 'loan_app';
-  if (text.includes('sim')) return 'sim_swap';
-  return 'other';
+  if (text.includes('arrest') || text.includes('police')) return 'digital_arrest' as const;
+  if (text.includes('upi') || text.includes('qr')) return 'upi_fraud' as const;
+  if (text.includes('investment') || text.includes('trading')) return 'investment_scam' as const;
+  if (text.includes('note') || text.includes('currency')) return 'counterfeit_currency' as const;
+  if (text.includes('loan')) return 'loan_app' as const;
+  if (text.includes('sim')) return 'sim_swap' as const;
+  return 'other' as const;
 }
 
 function inferRisk(title: string, description: string) {
   const text = `${title} ${description}`.toLowerCase();
-  if (text.includes('arrest') || text.includes('threat') || text.includes('large transfer')) return 'critical';
-  if (text.includes('upi') || text.includes('mule') || text.includes('qr')) return 'high';
-  if (text.includes('loan') || text.includes('sim')) return 'medium';
-  return 'medium';
-}
-
-function getCaseErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  return 'Case service unavailable';
+  if (text.includes('arrest') || text.includes('threat') || text.includes('large transfer')) return 'critical' as const;
+  if (text.includes('upi') || text.includes('mule') || text.includes('qr')) return 'high' as const;
+  return 'medium' as const;
 }

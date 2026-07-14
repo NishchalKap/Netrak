@@ -5,7 +5,7 @@ import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { UserRole } from '@/types';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -16,10 +16,11 @@ const roles: { label: string; role: UserRole; icon: React.ComponentProps<typeof 
 ];
 
 export default function RoleSelectionScreen() {
+  const { colors } = useAppTheme();
   return (
     <ScreenContainer scroll contentContainerStyle={styles.scroll}>
       <Typography variant="h1">Select Role</Typography>
-      <Typography variant="body" style={styles.subtitle}>
+      <Typography variant="body" style={[styles.subtitle, { color: colors.muted }]}>
         Choose the account boundary.
       </Typography>
       <View style={styles.list}>
@@ -46,7 +47,5 @@ const styles = StyleSheet.create({
   scroll: {
     justifyContent: 'center',
   },
-  subtitle: {
-    color: Colors.light.muted,
-  },
+  subtitle: {},
 });

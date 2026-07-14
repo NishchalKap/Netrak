@@ -6,9 +6,8 @@ import { Typography } from '@/components/ui/Typography';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useCaseStore } from '@/store/caseStore';
-import { useNotificationStore } from '@/store/notificationStore';
 import { IncidentCategory, RiskLevel } from '@/types';
 import { getIncidentCategoryLabel, getRiskLabel } from '@/utils';
 
@@ -25,9 +24,10 @@ const categories: IncidentCategory[] = [
 const riskLevels: RiskLevel[] = ['medium', 'high', 'critical'];
 
 export default function ReportIncidentScreen() {
+  const { colors } = useAppTheme();
   const createCase = useCaseStore((state) => state.createCase);
-  const isLoading = useCaseStore((state) => state.isLoading);
-  const addLocalNotification = useNotificationStore((state) => state.addLocalNotification);
+  const isLoading = useCaseStore((state) => state.isMutating);
+  const apiError = useCaseStore((state) => state.mutationError);
   const [category, setCategory] = useState<IncidentCategory>('digital_arrest');
   const [riskLevel, setRiskLevel] = useState<RiskLevel>('high');
   const [title, setTitle] = useState('');
@@ -56,28 +56,30 @@ export default function ReportIncidentScreen() {
       location: location.trim() || undefined,
       riskLevel,
     });
-    addLocalNotification(`Report created: ${caseItem.title}`, riskLevel === 'critical' ? 'sos' : 'case');
+    if (!caseItem) return;
     router.push({ pathname: '/(tabs)/case/[id]', params: { id: caseItem.id } });
   };
 
   return (
     <ScreenContainer scroll>
       <Typography variant="h1">Report Incident</Typography>
-      <Text style={styles.subtitle}>Create a complaint record for review and evidence tracking.</Text>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>Create a complaint record for review and evidence tracking.</Text>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Incident Type</Text>
-        <View style={styles.chipGrid}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Incident Type</Text>
+        <View accessibilityRole="radiogroup" style={styles.chipGrid}>
           {categories.map((item) => (
             <Pressable
               key={item}
-              style={[styles.chip, category === item && styles.chipSelected]}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: category === item }}
+              style={[styles.chip, { backgroundColor: category === item ? colors.surfaceMuted : colors.surface, borderColor: category === item ? colors.tint : colors.border }]}
               onPress={() => {
                 setCategory(item);
                 if (!title.trim()) setTitle(`${getIncidentCategoryLabel(item)} report`);
               }}
             >
-              <Text style={[styles.chipText, category === item && styles.chipTextSelected]}>
+              <Text style={[styles.chipText, { color: category === item ? colors.tint : colors.text }]}>
                 {getIncidentCategoryLabel(item)}
               </Text>
             </Pressable>
@@ -108,21 +110,23 @@ export default function ReportIncidentScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Risk</Text>
-        <View style={styles.riskRow}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Risk</Text>
+        <View accessibilityRole="radiogroup" style={styles.riskRow}>
           {riskLevels.map((item) => (
             <Pressable
               key={item}
-              style={[styles.riskChip, riskLevel === item && styles.riskChipSelected]}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: riskLevel === item }}
+              style={[styles.riskChip, { backgroundColor: riskLevel === item ? colors.surfaceMuted : colors.surface, borderColor: riskLevel === item ? colors.tint : colors.border }]}
               onPress={() => setRiskLevel(item)}
             >
-              <Text style={[styles.chipText, riskLevel === item && styles.chipTextSelected]}>{getRiskLabel(item)}</Text>
+              <Text style={[styles.chipText, { color: riskLevel === item ? colors.tint : colors.text }]}>{getRiskLabel(item)}</Text>
             </Pressable>
           ))}
         </View>
       </Card>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {(error || apiError) && <Text accessibilityRole="alert" style={[styles.error, { color: colors.danger }]}>{error || apiError}</Text>}
       <Button title="Submit report" iconName="send-check-outline" loading={isLoading} onPress={submitReport} />
       <Button title="Emergency SOS" iconName="alarm-light-outline" variant="danger" onPress={() => router.push('/(tabs)/sos')} />
     </ScreenContainer>
@@ -131,8 +135,6 @@ export default function ReportIncidentScreen() {
 
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -143,39 +145,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  chipSelected: {
-    backgroundColor: Colors.light.tint,
-    borderColor: Colors.light.tint,
-  },
   chipText: {
-    color: Colors.light.text,
     fontSize: 12,
     fontWeight: '800',
-  },
-  chipTextSelected: {
-    color: '#ffffff',
   },
   detailsInput: {
     minHeight: 110,
   },
   error: {
-    color: Colors.light.danger,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 4,
   },
   riskChip: {
     alignItems: 'center',
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
     borderRadius: 8,
     borderWidth: 1,
     flex: 1,
     paddingVertical: 12,
-  },
-  riskChipSelected: {
-    backgroundColor: Colors.light.info,
-    borderColor: Colors.light.info,
   },
   riskRow: {
     flexDirection: 'row',
@@ -185,13 +172,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: Colors.light.text,
     fontSize: 15,
     fontWeight: '800',
     marginBottom: 10,
   },
   subtitle: {
-    color: Colors.light.muted,
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 20,

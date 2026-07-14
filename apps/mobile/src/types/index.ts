@@ -106,7 +106,10 @@ export interface Notification {
 export interface AppSettings {
   locationSharing: boolean;
   voiceAlerts: boolean;
+  caseUpdateAlerts: boolean;
+  threatAlerts: boolean;
   emergencyContact: string;
   preferredLanguage: string;
   compactMode: boolean;
+  reduceMotion: boolean;
 }

@@ -6,26 +6,26 @@ import { Typography } from '@/components/ui/Typography';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Colors } from '@/constants';
 import { useAuthStore } from '@/store/authStore';
-import { useUserStore } from '@/store/userStore';
 import { UserRole } from '@/types';
 import { isValidEmail } from '@/utils';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function RegisterScreen() {
+  const { colors } = useAppTheme();
   const params = useLocalSearchParams<{ role?: string }>();
   const role = useMemo<UserRole>(() => {
     if (params.role === 'OFFICER' || params.role === 'ADMIN') return params.role;
     return 'CITIZEN';
   }, [params.role]);
-  const { registerWithCredentials, login, isLoading } = useAuthStore();
-  const setProfile = useUserStore((state) => state.setProfile);
+  const { registerWithCredentials, isLoading, error: authError, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
+    clearError();
     if (!isValidEmail(email)) {
       setError('Enter a valid email address.');
       return;
@@ -42,16 +42,7 @@ export default function RegisterScreen() {
     setError(null);
     try {
       await registerWithCredentials({ email: email.trim(), password, role });
-    } catch {
-      Alert.alert('Service unavailable', 'A demo profile will be created locally.');
-      setProfile({
-        id: '00000000-0000-4000-8000-000000000002',
-        email: email.trim(),
-        role,
-        name: email.split('@')[0],
-      });
-      await login('demo-token');
-    }
+    } catch { Alert.alert('Registration failed', 'Check your details and connection, then try again.'); }
   };
 
   return (
@@ -59,7 +50,7 @@ export default function RegisterScreen() {
       <View style={styles.header}>
         <Typography variant="h1">Create Account</Typography>
         <Typography variant="body" style={styles.subtitle}>
-          {role === 'CITIZEN' ? 'Citizen access' : `${role.toLowerCase()} access`}
+          <Typography variant="body" style={[styles.subtitle, { color: colors.muted }]}>{role === 'CITIZEN' ? 'Citizen access' : `${role.toLowerCase()} access`}</Typography>
         </Typography>
       </View>
 
@@ -67,12 +58,12 @@ export default function RegisterScreen() {
         <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
         <Input label="Password" secureTextEntry value={password} onChangeText={setPassword} />
         <Input label="Confirm password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
-        {error && <Text style={styles.error}>{error}</Text>}
+        {(error || authError) && <Text accessibilityRole="alert" style={[styles.error, { color: colors.danger }]}>{error || authError}</Text>}
         <Button title="Create account" iconName="account-plus-outline" loading={isLoading} onPress={handleRegister} />
       </Card>
 
-      <Pressable style={styles.loginLink} onPress={() => router.replace('/(auth)/login')}>
-        <Text style={styles.link}>Already have an account</Text>
+      <Pressable accessibilityRole="button" style={styles.loginLink} onPress={() => router.replace('/(auth)/login')}>
+        <Text style={[styles.link, { color: colors.tint }]}>Already have an account</Text>
       </Pressable>
     </ScreenContainer>
   );
@@ -80,7 +71,6 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   error: {
-    color: Colors.light.danger,
     fontSize: 13,
     marginTop: 4,
   },
@@ -88,7 +78,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   link: {
-    color: Colors.light.tint,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -100,7 +89,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   subtitle: {
-    color: Colors.light.muted,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

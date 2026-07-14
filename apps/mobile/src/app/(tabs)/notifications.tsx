@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { NotificationListItem } from '@/components/notifications/NotificationListItem';
 import { useNotificationStore } from '@/store/notificationStore';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { SyncStatus } from '@/components/ui/SyncStatus';
+import { SkeletonList } from '@/components/ui/SkeletonList';
 
 export default function NotificationCenterScreen() {
-  const { notifications, fetchNotifications, markRead, markAllRead } = useNotificationStore();
+  const { colors } = useAppTheme();
+  const { notifications, fetchNotifications, markRead, markAllRead, isLoading, error, source, lastSyncedAt } = useNotificationStore();
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   useEffect(() => {
@@ -19,25 +22,27 @@ export default function NotificationCenterScreen() {
   }, [fetchNotifications]);
 
   return (
-    <ScreenContainer scroll>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <MaterialCommunityIcons name="arrow-left" size={22} color={Colors.light.text} />
+    <ScreenContainer scroll refreshing={isLoading && notifications.length > 0} onRefresh={() => fetchNotifications(true)}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Go back" style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => router.back()}>
+        <MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} />
       </Pressable>
 
       <View style={styles.header}>
         <View>
           <Typography variant="h1">Notifications</Typography>
-          <Text style={styles.subtitle}>{unreadCount} unread alerts</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>{unreadCount} unread alerts</Text>
         </View>
-        <Button title="Read all" iconName="check-all" variant="outline" onPress={markAllRead} />
+        <Button title="Read all" iconName="check-all" variant="outline" disabled={unreadCount === 0} onPress={markAllRead} />
       </View>
 
-      {notifications.length ? (
+      <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => fetchNotifications(true)} />
+
+      {isLoading && !notifications.length ? <SkeletonList /> : notifications.length ? (
         notifications.map((notification) => (
           <NotificationListItem key={notification.id} item={notification} onPress={() => markRead(notification.id)} />
         ))
       ) : (
-        <EmptyState iconName="bell-off-outline" title="No notifications" message="Case and threat alerts will appear here." />
+        <EmptyState iconName="bell-off-outline" title={error ? 'Notifications unavailable' : 'No notifications'} message={error ? 'Pull down to retry when your connection is available.' : 'Case and threat alerts will appear here.'} />
       )}
     </ScreenContainer>
   );
@@ -46,8 +51,6 @@ export default function NotificationCenterScreen() {
 const styles = StyleSheet.create({
   backButton: {
     alignItems: 'center',
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
     borderRadius: 8,
     borderWidth: 1,
     height: 42,
@@ -61,7 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   subtitle: {
-    color: Colors.light.muted,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 12,

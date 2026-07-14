@@ -1,0 +1,201 @@
+NETRAK FRONTEND ENGINEERING REPORT
+Generated: 14 July 2026
+Branch: feat/frontend-phase-1-redesign
+
+1. EXECUTIVE SUMMARY
+
+The existing Expo visual redesign was preserved and converted into a functional,
+production-oriented frontend. Mock authentication, seeded cases, seeded
+notifications, and the static threat feed were removed. The mobile app now uses
+the existing gateway APIs for authentication, profiles, cases, evidence,
+notifications, threats, password reset, token refresh, and service health.
+
+The app runs at http://localhost:8081 with zero TypeScript errors, zero lint
+errors or warnings, and no application errors in the browser console.
+
+2. AUTHENTICATION AND SESSION MANAGEMENT
+
+- Login and registration now use only the existing backend endpoints.
+- Demo credentials and local authentication fallbacks were removed.
+- Forgot Password now calls POST /auth/forgot-password.
+- JWTs use SecureStore on native platforms and localStorage on Expo Web.
+- App startup restores valid sessions and rejects locally expired JWTs.
+- A concurrency-safe refresh interceptor calls POST /auth/refresh once when
+  simultaneous requests receive 401 responses.
+- Failed refresh clears the session and routes the user back to authentication.
+- Logout clears profile, cases, notifications, locally persisted notification
+  read IDs, and the stored JWT so data cannot leak into the next account.
+- Retry behavior is limited to idempotent requests, preventing duplicate case or
+  evidence creation after ambiguous network failures.
+
+3. API AND STATE MANAGEMENT
+
+- Added normalized API error handling with human-readable timeout, network, and
+  backend failure messages.
+- Added request de-duplication to profile, case, notification, and threat stores.
+- Separated read/synchronization errors from mutation errors so unrelated fetch
+  failures do not leak into report, SOS, or evidence forms.
+- Added explicit online, cached, loading, empty, and error states.
+- Added pull-to-refresh to dashboard, history, threats, notifications, profile,
+  evidence, and case-detail screens where applicable.
+- Added latest-sync indicators and retry actions.
+- Added optimistic case update/delete behavior with rollback on failure.
+- Enforced citizen case ownership and per-user notification filtering in the
+  frontend because the current list endpoints return global records. Officer and
+  admin case visibility remains available according to the authenticated role.
+
+4. CASE MANAGEMENT
+
+- Case list and case detail now consume the live case endpoints only.
+- Create, update, status progression, delete, history, evidence, and detail
+  refresh workflows are connected to the existing API.
+- Case deletion includes a destructive confirmation and rollback on failure.
+- Case detail displays skeleton, retry, cached, missing, and mutation-error states.
+- Case IDs and timestamps retain the approved metadata presentation.
+- Locally fabricated case success behavior and notification side effects were
+  removed.
+
+5. EVIDENCE WORKFLOW
+
+- Added Expo camera, gallery, and document pickers.
+- Added native permission handling with human-readable denial guidance.
+- Added selected image preview, evidence type, label, reference, notes, loading,
+  failure, retry, and success navigation.
+- Evidence is submitted through POST /cases/:id/evidence.
+- The current backend endpoint accepts reference metadata rather than binary file
+  bodies, so selected file URIs are submitted as evidence references. No upload
+  endpoint was invented.
+- Added platform permission descriptions and disabled an unnecessary microphone
+  permission.
+
+6. THREATS AND NOTIFICATIONS
+
+- Removed the static threat feed and added a real threat API/store.
+- Threat intelligence persists a small cache and clearly labels cached/offline
+  data with the latest sync time.
+- Notifications now use the backend list endpoint with unread counts and refresh.
+- Read and Read All states persist locally by notification ID because the current
+  Swagger/backend exposes no mark-read endpoint.
+- Notification alert preferences are persisted and structured for later push
+  delivery integration.
+
+7. PROFILE AND SETTINGS
+
+- Profile retrieval and editing now use GET/PATCH /auth/profile.
+- Added profile loading, validation, saved, retry, and error states.
+- Added password-reset initiation from the authenticated profile.
+- Added persisted appearance, system-theme, case-update alert, threat alert,
+  voice alert, compact card, location sharing, emergency contact, language, and
+  reduced-motion preferences.
+- Added privacy, terms, about/version, and API diagnostics sections.
+- Diagnostics uses the existing GET /health API endpoint.
+- Sign out now requires confirmation.
+
+8. THEME, RESPONSIVENESS, AND ACCESSIBILITY
+
+- Dark remains the first-launch default.
+- Dark, light, system-following, and manual override modes are fully supported.
+- Theme and settings persist across app restarts.
+- Fixed system-theme toggling so manual changes use the currently resolved theme.
+- Added a centered maximum content width for tablet and web layouts without
+  changing the approved mobile composition.
+- Added keyboard avoidance for form screens.
+- Added semantic roles, labels, switch states, radio groups, alerts, live regions,
+  busy/disabled button states, and 44px-or-larger primary touch targets.
+- Added reduced-motion support for navigation transitions.
+- Added subtle native haptic feedback to shared buttons.
+- Added skeleton loading and reusable sync/offline status components.
+
+9. CODE AND DEPENDENCY CLEANUP
+
+- Removed seeded threat, case, and notification data.
+- Removed unused Supabase client code from the mobile app.
+- Removed obsolete theme files and unused form, schema, glass, symbol, Supabase,
+  and duplicate icon dependencies.
+- Added expo-image-picker, expo-document-picker, and expo-haptics using Expo SDK
+  compatible versions.
+- Updated app metadata, native plugin configuration, environment documentation,
+  package lockfile, and mobile README.
+
+10. FILES ADDED
+
+- apps/mobile/src/components/ui/SkeletonList.tsx
+- apps/mobile/src/components/ui/SyncStatus.tsx
+- apps/mobile/src/services/apiError.ts
+- apps/mobile/src/services/healthApi.ts
+- apps/mobile/src/services/preferencesStorage.ts
+- apps/mobile/src/services/sessionEvents.ts
+- apps/mobile/src/services/threatApi.ts
+- apps/mobile/src/services/tokenStorage.ts
+- apps/mobile/src/store/threatStore.ts
+- docs/design/DESIGN.md
+- docs/design/COMPONENTS.md
+- docs/design/LANDING_PAGE.md
+- docs/design/CITIZEN_APP.md
+- docs/design/LAW_ENFORCEMENT.md
+- docs/design/ADMIN.md
+- FRONTEND_CHANGE_REPORT.txt
+
+11. FILES REMOVED
+
+- apps/mobile/src/data/threatFeed.ts
+- apps/mobile/src/services/supabase.ts
+- apps/mobile/src/theme/index.ts
+- apps/mobile/src/theme/theme.ts
+
+12. MAJOR FILES MODIFIED
+
+- All screens under apps/mobile/src/app/(auth)/ and apps/mobile/src/app/(tabs)/
+- apps/mobile/src/app/index.tsx and apps/mobile/src/app/_layout.tsx
+- Shared UI under apps/mobile/src/components/
+- Theme tokens under apps/mobile/src/constants/Colors.ts
+- API services under apps/mobile/src/services/
+- Zustand stores under apps/mobile/src/store/
+- apps/mobile/src/types/index.ts
+- apps/mobile/app.json, package.json, package-lock.json, .env.example, README.md,
+  and tsconfig.json
+
+13. VALIDATION COMPLETED
+
+- npm install: completed successfully.
+- npm run lint: passed with zero errors and zero warnings.
+- npm run typecheck: passed with zero TypeScript errors.
+- npx expo config --type public: passed; iOS, Android, and Web configuration is
+  valid and no unnecessary microphone permission is emitted.
+- npx expo start --web --port 8081: starts successfully.
+- Browser smoke test: no application errors in the console.
+- Theme test: dark/light switch works and persists after reload.
+- Responsive checks: 390x844, 768x1024, and 1440x900 layouts had no horizontal
+  overflow.
+- Authentication and report validation states rendered correctly.
+- Backend-unavailable states displayed skeletons, retry actions, and readable
+  offline/error copy without raw backend errors.
+
+14. KNOWN BACKEND-CONTRACT LIMITATIONS
+
+These were not changed because the sprint explicitly forbids backend or API
+contract changes:
+
+- Case create/update DTOs do not currently accept category, riskLevel, or
+  location even though those columns exist in Prisma. The frontend sends only
+  fields accepted by Swagger and derives missing presentation metadata.
+- Evidence supports metadata references only; there is no binary file upload or
+  object-storage endpoint.
+- Notifications have no mark-read or mark-all-read endpoints, so read state is
+  persisted locally.
+- The refresh endpoint rejects an already expired JWT; an expired session must
+  sign in again.
+- Case and notification list endpoints return global records. The frontend
+  filters them, but ownership enforcement should ultimately be added server-side.
+- Dedicated officer mission-control and admin routes do not exist in the current
+  Expo application. Their approved specifications remain in docs/design/.
+- npm audit reports 11 moderate advisories through Expo's transitive xcode/uuid
+  build-tool chain. npm's proposed fix downgrades Expo to SDK 46 and was not
+  applied because it is a breaking and unsafe remediation.
+
+15. FINAL STATUS
+
+The production-oriented Expo frontend is complete within the capabilities of the
+existing API contract, validated, running locally, and prepared for GitHub on:
+
+  feat/frontend-phase-1-redesign

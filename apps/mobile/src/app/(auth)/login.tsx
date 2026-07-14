@@ -1,120 +1,31 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
-import { useUserStore } from '@/store/userStore';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
-import { Typography } from '@/components/ui/Typography';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Colors } from '@/constants';
-import { router } from 'expo-router';
 import { isValidEmail } from '@/utils';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function LoginScreen() {
-  const { login, loginWithCredentials, isLoading, error, clearError } = useAuthStore();
-  const setProfile = useUserStore((state) => state.setProfile);
-  const [email, setEmail] = useState('citizen@netrak.local');
-  const [password, setPassword] = useState('password123');
+  const { colors } = useAppTheme();
+  const { loginWithCredentials, isLoading, error, clearError } = useAuthStore();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
-
   const handleSignIn = async () => {
     clearError();
-    if (!isValidEmail(email)) {
-      setFormError('Enter a valid email address.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setFormError('Password must be at least 6 characters.');
-      return;
-    }
-
+    if (!isValidEmail(email)) return setFormError('Enter a valid email address.');
+    if (password.length < 6) return setFormError('Password must be at least 6 characters.');
     setFormError(null);
-    try {
-      await loginWithCredentials({ email: email.trim(), password });
-    } catch {
-      Alert.alert('Service unavailable', 'Use demo mode while the local backend is offline.');
-    }
+    try { await loginWithCredentials({ email: email.trim(), password }); } catch { Alert.alert('Sign in failed', 'Check your details and connection, then try again.'); }
   };
-
-  const handleDemo = async () => {
-    setProfile({
-      id: '00000000-0000-4000-8000-000000000001',
-      email: 'citizen@netrak.local',
-      role: 'CITIZEN',
-      name: 'Citizen User',
-      district: 'Demo District',
-    });
-    await login('demo-token');
-  };
-
-  return (
-    <ScreenContainer scroll contentContainerStyle={styles.scroll}>
-      <View style={styles.header}>
-        <Typography variant="h1">Netrak</Typography>
-        <Typography variant="body" style={styles.subtitle}>
-          Citizen fraud shield
-        </Typography>
-      </View>
-
-      <Card>
-        <Input
-          label="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          error={formError?.includes('email') ? formError : undefined}
-        />
-        <Input
-          label="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          error={formError?.includes('Password') ? formError : undefined}
-        />
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Button title="Sign in" iconName="login" loading={isLoading} onPress={handleSignIn} />
-        <Button title="Continue demo" iconName="shield-account-outline" variant="outline" onPress={handleDemo} />
-      </Card>
-
-      <View style={styles.links}>
-        <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-          <Text style={styles.link}>Forgot password</Text>
-        </Pressable>
-        <Pressable onPress={() => router.push('/(auth)/role-selection')}>
-          <Text style={styles.link}>Create account</Text>
-        </Pressable>
-      </View>
-    </ScreenContainer>
-  );
+  return <ScreenContainer scroll contentContainerStyle={styles.scroll}>
+    <View style={styles.intro}><Text style={[styles.kicker, { color: colors.tint }]}>WELCOME TO NETRAK</Text><Text style={[styles.title, { color: colors.text }]}>Security should{`\n`}feel simple.</Text><Text style={[styles.copy, { color: colors.muted }]}>Sign in to your private digital safety space.</Text></View>
+    <Card style={styles.form}><Input label="Email address" autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} error={formError?.includes('email') ? formError : undefined} /><Input label="Password" autoComplete="current-password" secureTextEntry value={password} onChangeText={setPassword} error={formError?.includes('Password') ? formError : undefined} />{error && <Text accessibilityRole="alert" style={[styles.error, { color: colors.danger }]}>{error}</Text>}<Button title="Sign in securely" iconName="arrow-right" loading={isLoading} onPress={handleSignIn} /></Card>
+    <View style={styles.links}><Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/forgot-password')}><Text style={[styles.link, { color: colors.tint }]}>Forgot password?</Text></Pressable><Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/role-selection')}><Text style={[styles.link, { color: colors.tint }]}>Create account</Text></Pressable></View>
+  </ScreenContainer>;
 }
-
-const styles = StyleSheet.create({
-  error: {
-    color: Colors.light.danger,
-    fontSize: 13,
-    marginTop: 4,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  link: {
-    color: Colors.light.tint,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  scroll: {
-    justifyContent: 'center',
-  },
-  subtitle: {
-    color: Colors.light.muted,
-    fontWeight: '600',
-  },
-});
+const styles = StyleSheet.create({ scroll: { justifyContent: 'center' }, intro: { marginBottom: 32 }, kicker: { fontSize: 10, fontWeight: '800', letterSpacing: 1.4, marginBottom: 14 }, title: { fontSize: 35, fontWeight: '800', letterSpacing: -1.1, lineHeight: 40 }, copy: { fontSize: 15, marginTop: 12 }, form: { paddingTop: 12 }, error: { fontSize: 13, marginTop: 4 }, links: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 }, link: { fontSize: 13, fontWeight: '700' } });

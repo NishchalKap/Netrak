@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewProps, ViewStyle } from 'react-native';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 interface CardProps extends ViewProps {
   tone?: 'default' | 'muted' | 'danger';
@@ -8,26 +8,13 @@ interface CardProps extends ViewProps {
 }
 
 export function Card({ tone = 'default', style, children, ...props }: CardProps) {
-  return (
-    <View style={[styles.card, tone === 'muted' && styles.muted, tone === 'danger' && styles.danger, style]} {...props}>
-      {children}
-    </View>
-  );
+  const { colors } = useAppTheme();
+  const toneStyle = tone === 'muted'
+    ? { backgroundColor: colors.surfaceMuted }
+    : tone === 'danger'
+      ? { backgroundColor: `${colors.danger}14`, borderColor: `${colors.danger}55` }
+      : undefined;
+  return <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, toneStyle, style]} {...props}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 14,
-  },
-  muted: {
-    backgroundColor: Colors.light.surfaceMuted,
-  },
-  danger: {
-    backgroundColor: '#fff1f2',
-    borderColor: '#fecdd3',
-  },
-});
+const styles = StyleSheet.create({ card: { borderRadius: 20, borderWidth: 1, padding: 18 } });

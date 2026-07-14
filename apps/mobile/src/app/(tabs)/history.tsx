@@ -6,15 +6,18 @@ import { Typography } from '@/components/ui/Typography';
 import { CaseListItem } from '@/components/cases/CaseListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useCaseStore } from '@/store/caseStore';
 import { CaseStatus } from '@/types';
 import { getStatusLabel } from '@/utils';
+import { SyncStatus } from '@/components/ui/SyncStatus';
+import { SkeletonList } from '@/components/ui/SkeletonList';
 
 const filters: (CaseStatus | 'ALL')[] = ['ALL', 'OPEN', 'IN_PROGRESS', 'ESCALATED', 'CLOSED'];
 
 export default function ReportHistoryScreen() {
-  const { cases, fetchCases, isLoading } = useCaseStore();
+  const { colors } = useAppTheme();
+  const { cases, fetchCases, isLoading, error, source, lastSyncedAt } = useCaseStore();
   const [filter, setFilter] = useState<CaseStatus | 'ALL'>('ALL');
 
   useEffect(() => {
@@ -27,21 +30,23 @@ export default function ReportHistoryScreen() {
   );
 
   return (
-    <ScreenContainer scroll>
+    <ScreenContainer scroll refreshing={isLoading && cases.length > 0} onRefresh={() => fetchCases(true)}>
       <View style={styles.header}>
         <View>
           <Typography variant="h1">Report History</Typography>
-          <Text style={styles.subtitle}>{cases.length} total reports</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>{cases.length} total reports</Text>
         </View>
         <Button title="New" iconName="plus" onPress={() => router.push('/(tabs)/report')} />
       </View>
 
-      <View style={styles.filters}>
+      <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => fetchCases(true)} />
+
+      <View accessibilityRole="radiogroup" style={styles.filters}>
         {filters.map((item) => {
           const selected = filter === item;
           return (
-            <Pressable key={item} style={[styles.filter, selected && styles.filterSelected]} onPress={() => setFilter(item)}>
-              <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
+            <Pressable key={item} accessibilityRole="radio" accessibilityState={{ checked: selected }} style={[styles.filter, { backgroundColor: selected ? colors.surfaceMuted : colors.surface, borderColor: selected ? colors.tint : colors.border }]} onPress={() => setFilter(item)}>
+              <Text style={[styles.filterText, { color: selected ? colors.tint : colors.text }]}>
                 {item === 'ALL' ? 'All' : getStatusLabel(item)}
               </Text>
             </Pressable>
@@ -49,7 +54,7 @@ export default function ReportHistoryScreen() {
         })}
       </View>
 
-      {filteredCases.length ? (
+      {isLoading && !cases.length ? <SkeletonList /> : filteredCases.length ? (
         filteredCases.map((caseItem) => (
           <CaseListItem
             key={caseItem.id}
@@ -60,8 +65,8 @@ export default function ReportHistoryScreen() {
       ) : (
         <EmptyState
           iconName={isLoading ? 'sync' : 'clipboard-text-off-outline'}
-          title={isLoading ? 'Loading reports' : 'No reports found'}
-          message="Reports matching this status will appear here."
+          title={error ? 'Reports unavailable' : 'No reports found'}
+          message={error ? 'Pull down to retry when your connection is available.' : 'Reports matching this status will appear here.'}
         />
       )}
     </ScreenContainer>
@@ -70,24 +75,14 @@ export default function ReportHistoryScreen() {
 
 const styles = StyleSheet.create({
   filter: {
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  filterSelected: {
-    backgroundColor: Colors.light.tint,
-    borderColor: Colors.light.tint,
-  },
   filterText: {
-    color: Colors.light.text,
     fontSize: 12,
     fontWeight: '800',
-  },
-  filterTextSelected: {
-    color: '#ffffff',
   },
   filters: {
     flexDirection: 'row',
@@ -101,9 +96,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   subtitle: {
-    color: Colors.light.muted,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     marginBottom: 12,
   },
 });

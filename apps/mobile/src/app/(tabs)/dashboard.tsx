@@ -4,174 +4,86 @@ import { router } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Typography } from '@/components/ui/Typography';
-import { StatCard } from '@/components/ui/StatCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CaseListItem } from '@/components/cases/CaseListItem';
-import { ThreatCard } from '@/components/threats/ThreatCard';
 import { useCaseStore } from '@/store/caseStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useUserStore } from '@/store/userStore';
-import { threatFeed } from '@/data/threatFeed';
-import { Colors } from '@/constants';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { SyncStatus } from '@/components/ui/SyncStatus';
+import { SkeletonList } from '@/components/ui/SkeletonList';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function DashboardScreen() {
-  const { cases, fetchCases } = useCaseStore();
-  const { notifications, fetchNotifications } = useNotificationStore();
+  const { colors } = useAppTheme();
+  const { cases, fetchCases, isLoading, error, source, lastSyncedAt } = useCaseStore();
+  const { notifications, fetchNotifications, isLoading: notificationsLoading } = useNotificationStore();
   const { profile, fetchProfile } = useUserStore();
 
-  useEffect(() => {
-    fetchCases();
-    fetchNotifications();
-    if (!profile) fetchProfile();
-  }, [fetchCases, fetchNotifications, fetchProfile, profile]);
+  useEffect(() => { fetchCases(); fetchNotifications(); if (!profile) fetchProfile(); }, [fetchCases, fetchNotifications, fetchProfile, profile]);
 
-  const stats = useMemo(() => {
-    const activeCases = cases.filter((caseItem) => caseItem.status !== 'CLOSED').length;
-    const escalatedCases = cases.filter((caseItem) => caseItem.status === 'ESCALATED').length;
-    const unreadAlerts = notifications.filter((notification) => !notification.read).length;
-
-    return { activeCases, escalatedCases, unreadAlerts };
-  }, [cases, notifications]);
-
-  const recentCases = cases.slice(0, 2);
-  const latestThreat = threatFeed[0];
+  const overview = useMemo(() => ({
+    active: cases.filter((item) => item.status !== 'CLOSED').length,
+    unread: notifications.filter((item) => !item.read).length,
+  }), [cases, notifications]);
+  const firstName = profile?.name?.split(' ')[0] || 'there';
 
   return (
-    <ScreenContainer scroll>
+    <ScreenContainer scroll refreshing={(isLoading || notificationsLoading) && (cases.length > 0 || notifications.length > 0)} onRefresh={() => { fetchCases(true); fetchNotifications(true); }} contentContainerStyle={styles.scroll}>
       <View style={styles.header}>
         <View>
-          <Typography variant="h1" style={styles.title}>
-            Citizen Dashboard
-          </Typography>
-          <Text style={styles.subtitle}>{profile?.district ?? 'Netrak shield'} jurisdiction</Text>
+          <Text style={[styles.eyebrow, { color: colors.tint }]}>NETRAK / {profile?.role ?? 'CITIZEN'}</Text>
+          <Typography variant="h1" style={styles.greeting}>Good morning, {firstName}.</Typography>
+          <Text style={[styles.subhead, { color: colors.muted }]}>Your digital safety, quietly protected.</Text>
         </View>
-        <Pressable style={styles.iconButton} onPress={() => router.push('/(tabs)/notifications')}>
-          <MaterialCommunityIcons name="bell-outline" size={23} color={Colors.light.text} />
-          {stats.unreadAlerts > 0 && <View style={styles.notificationDot} />}
+        <Pressable accessibilityRole="button" accessibilityLabel="Open notifications" style={[styles.bell, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => router.push('/(tabs)/notifications')}>
+          <MaterialCommunityIcons name="bell-outline" size={20} color={colors.text} />
+          {overview.unread > 0 && <View style={[styles.dot, { backgroundColor: colors.tint, borderColor: colors.surface }]} />}
         </Pressable>
       </View>
 
-      <Card tone="danger" style={styles.sosCard}>
-        <View style={styles.sosCopy}>
-          <Text style={styles.sosTitle}>Emergency SOS</Text>
-          <Text style={styles.sosText}>Active coercion, digital arrest, or live transfer pressure.</Text>
+      <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => fetchCases(true)} />
+
+      <Card style={[styles.threatCard, { backgroundColor: colors.surface, borderColor: `${colors.tint}38` }]}>
+        <View style={styles.cardTopline}><Text style={[styles.label, { color: colors.muted }]}>YOUR PROTECTION STATUS</Text><View style={styles.secure}><View style={[styles.secureDot, { backgroundColor: colors.success }]} /><Text style={[styles.secureText, { color: colors.success }]}>MONITORED</Text></View></View>
+        <View style={styles.threatBody}>
+          <View><Text style={[styles.threatNumber, { color: colors.text }]}>Protected</Text><Text style={[styles.threatText, { color: colors.muted }]}>No immediate action is needed.</Text></View>
+          <View style={[styles.ring, { backgroundColor: `${colors.tint}14`, borderColor: `${colors.tint}4D` }]}><MaterialCommunityIcons name="shield-check-outline" size={31} color={colors.tint} /></View>
         </View>
-        <Button title="SOS" iconName="alarm-light-outline" variant="danger" onPress={() => router.push('/(tabs)/sos')} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <Text style={[styles.advisory, { color: colors.muted }]}><Text style={[styles.advisoryStrong, { color: colors.text }]}>Security advisory · </Text>Never share an OTP or transfer money to verify your identity.</Text>
       </Card>
 
-      <View style={styles.statsGrid}>
-        <StatCard label="Active cases" value={String(stats.activeCases)} iconName="folder-open-outline" tone="info" />
-        <StatCard label="Escalated" value={String(stats.escalatedCases)} iconName="alert-octagon-outline" tone="danger" />
-      </View>
-      <View style={styles.statsGrid}>
-        <StatCard label="Unread alerts" value={String(stats.unreadAlerts)} iconName="bell-badge-outline" tone="warning" />
-        <StatCard label="Threat level" value="High" iconName="radar" tone="violet" />
-      </View>
-
-      <SectionHeader
-        title="Quick Actions"
-        action={
-          <Pressable onPress={() => router.push('/(tabs)/profile')}>
-            <Text style={styles.link}>Profile</Text>
-          </Pressable>
-        }
-      />
-      <View style={styles.actions}>
-        <Button title="Report Incident" iconName="file-alert-outline" onPress={() => router.push('/(tabs)/report')} />
-        <Button title="Upload Evidence" iconName="file-upload-outline" variant="outline" onPress={() => router.push('/(tabs)/upload')} />
+      <View style={styles.actionRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Report fraud" style={[styles.action, styles.actionPrimary, { backgroundColor: colors.tint, borderColor: colors.tint }]} onPress={() => router.push('/(tabs)/report')}>
+          <MaterialCommunityIcons name="file-document-edit-outline" size={21} color={colors.background} /><Text style={[styles.actionPrimaryText, { color: colors.background }]}>Report fraud</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Emergency SOS" style={[styles.action, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => router.push('/(tabs)/sos')}>
+          <MaterialCommunityIcons name="shield-alert-outline" size={21} color={colors.text} /><Text style={[styles.actionText, { color: colors.text }]}>Emergency SOS</Text>
+        </Pressable>
       </View>
 
-      <SectionHeader title="Latest Threat" />
-      <ThreatCard threat={latestThreat} />
+      <SectionHeader title="Your activity" />
+      <View style={styles.metrics}>
+        <Card style={styles.metric}><Text style={[styles.metricValue, { color: colors.text }]}>{overview.active}</Text><Text style={[styles.metricLabel, { color: colors.muted }]}>ACTIVE CASES</Text></Card>
+        <Card style={styles.metric}><Text style={[styles.metricValue, { color: colors.text }]}>{overview.unread}</Text><Text style={[styles.metricLabel, { color: colors.muted }]}>NEW UPDATES</Text></Card>
+      </View>
 
-      <SectionHeader
-        title="Recent Reports"
-        action={
-          <Pressable onPress={() => router.push('/(tabs)/history')}>
-            <Text style={styles.link}>View all</Text>
-          </Pressable>
-        }
-      />
-      {recentCases.map((caseItem) => (
-        <CaseListItem
-          key={caseItem.id}
-          item={caseItem}
-          onPress={() => router.push({ pathname: '/(tabs)/case/[id]', params: { id: caseItem.id } })}
-        />
-      ))}
+      <SectionHeader title="Recent cases" action={<Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/history')}><Text style={[styles.seeAll, { color: colors.tint }]}>View all</Text></Pressable>} />
+      {isLoading && !cases.length ? <SkeletonList count={2} /> : cases.slice(0, 2).map((item) => <CaseListItem key={item.id} item={item} onPress={() => router.push({ pathname: '/(tabs)/case/[id]', params: { id: item.id } })} />)}
+      {!isLoading && !cases.length && <EmptyState iconName="folder-outline" title="No active cases" message={error ? 'Cases could not be refreshed. Pull down to retry.' : 'Reports you submit will appear here.'} />}
+
+      <Card style={styles.evidenceCard}>
+        <View style={[styles.evidenceIcon, { backgroundColor: colors.surfaceMuted }]}><MaterialCommunityIcons name="cloud-upload-outline" size={22} color={colors.tint} /></View>
+        <View style={styles.evidenceCopy}><Text style={[styles.evidenceTitle, { color: colors.text }]}>Keep evidence ready</Text><Text style={[styles.evidenceText, { color: colors.muted }]}>Add screenshots, recordings, or transaction details to an open case.</Text></View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Add evidence" onPress={() => router.push('/(tabs)/upload')}><MaterialCommunityIcons name="arrow-top-right" size={21} color={colors.text} /></Pressable>
+      </Card>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  actions: {
-    gap: 8,
-  },
-  header: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: 'center',
-    position: 'relative',
-    width: 44,
-  },
-  link: {
-    color: Colors.light.tint,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  notificationDot: {
-    backgroundColor: Colors.light.danger,
-    borderRadius: 5,
-    height: 10,
-    position: 'absolute',
-    right: 9,
-    top: 9,
-    width: 10,
-  },
-  sosCard: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  sosCopy: {
-    flex: 1,
-  },
-  sosText: {
-    color: Colors.light.muted,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  sosTitle: {
-    color: Colors.light.danger,
-    fontSize: 17,
-    fontWeight: '900',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-  },
-  subtitle: {
-    color: Colors.light.muted,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  title: {
-    marginBottom: 0,
-  },
+  scroll: { paddingBottom: 44 }, header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
+  eyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1.4, marginBottom: 10 }, greeting: { maxWidth: 285, marginBottom: 5 }, subhead: { fontSize: 14, lineHeight: 20 }, bell: { alignItems: 'center', borderRadius: 14, borderWidth: 1, height: 48, justifyContent: 'center', width: 48 }, dot: { borderRadius: 5, borderWidth: 2, height: 10, position: 'absolute', right: 9, top: 9, width: 10 }, threatCard: { padding: 20 }, cardTopline: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }, label: { fontSize: 10, fontWeight: '800', letterSpacing: 1.1 }, secure: { alignItems: 'center', flexDirection: 'row', gap: 5 }, secureDot: { borderRadius: 3, height: 6, width: 6 }, secureText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.7 }, threatBody: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }, threatNumber: { fontSize: 27, fontWeight: '800', letterSpacing: -0.7 }, threatText: { fontSize: 13, marginTop: 4 }, ring: { alignItems: 'center', borderRadius: 28, borderWidth: 1, height: 56, justifyContent: 'center', width: 56 }, divider: { height: 1, marginVertical: 19 }, advisory: { fontSize: 12, lineHeight: 18 }, advisoryStrong: { fontWeight: '700' }, actionRow: { flexDirection: 'row', gap: 10, marginTop: 12 }, action: { alignItems: 'center', borderRadius: 17, borderWidth: 1, flex: 1, gap: 8, justifyContent: 'center', minHeight: 92, paddingHorizontal: 8 }, actionPrimary: {}, actionText: { fontSize: 13, fontWeight: '700' }, actionPrimaryText: { fontSize: 13, fontWeight: '800' }, metrics: { flexDirection: 'row', gap: 10 }, metric: { flex: 1, minHeight: 105 }, metricValue: { fontSize: 31, fontWeight: '800', letterSpacing: -0.8 }, metricLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 0.8, marginTop: 8 }, seeAll: { color: '#49D5E8', fontSize: 13, fontWeight: '700' }, evidenceCard: { alignItems: 'center', flexDirection: 'row', gap: 13, marginTop: 4 }, evidenceIcon: { alignItems: 'center', borderRadius: 14, height: 46, justifyContent: 'center', width: 46 }, evidenceCopy: { flex: 1 }, evidenceTitle: { fontSize: 15, fontWeight: '700' }, evidenceText: { fontSize: 12, lineHeight: 17, marginTop: 3 },
 });

@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuthStore } from '@/store/authStore';
 import * as SplashScreen from 'expo-splash-screen';
+import { useSettingsStore } from '@/store/settingsStore';
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 function RootLayoutInner() {
   const { paperTheme, colors, isDarkMode } = useAppTheme();
   const { isHydrated, isAuthenticated, hydrate } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const reduceMotion = useSettingsStore((state) => state.reduceMotion);
 
   useEffect(() => {
     hydrate();
@@ -22,16 +23,11 @@ function RootLayoutInner() {
   useEffect(() => {
     if (!isHydrated) return;
 
-    const timer = setTimeout(() => {
-      setIsNavigationReady(true);
-      SplashScreen.hideAsync();
-    }, 500);
-
-    return () => clearTimeout(timer);
+    void SplashScreen.hideAsync();
   }, [isHydrated]);
 
   useEffect(() => {
-    if (!isHydrated || !isNavigationReady) return;
+    if (!isHydrated) return;
 
     const currentSegments = segments as string[];
     const inAuthGroup = currentSegments[0] === '(auth)';
@@ -42,7 +38,7 @@ function RootLayoutInner() {
     } else if (!isAuthenticated && !inAuthGroup && !isIndex) {
       router.replace('/(auth)/login');
     }
-  }, [isHydrated, isNavigationReady, isAuthenticated, router, segments]);
+  }, [isHydrated, isAuthenticated, router, segments]);
 
   return (
     <PaperProvider theme={paperTheme}>
@@ -51,7 +47,7 @@ function RootLayoutInner() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
-          animation: 'fade',
+          animation: reduceMotion ? 'none' : 'fade',
         }}
       >
         <Stack.Screen name="index" />
