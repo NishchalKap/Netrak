@@ -21,6 +21,7 @@ interface NotificationState {
 }
 
 let activeRequest: Promise<Notification[]> | null = null;
+const NOTIFICATIONS_TTL_MS = 30000;
 
 export const useNotificationStore = create<NotificationState>()(
   persist(
@@ -31,8 +32,10 @@ export const useNotificationStore = create<NotificationState>()(
       source: 'idle',
       lastSyncedAt: null,
       readIds: [],
-      fetchNotifications: async (_force = false) => {
+      fetchNotifications: async (force = false) => {
         if (activeRequest) return activeRequest;
+        const { notifications, lastSyncedAt } = get();
+        if (!force && notifications.length && isFresh(lastSyncedAt, NOTIFICATIONS_TTL_MS)) return notifications;
         set({ isLoading: true, error: null });
         activeRequest = notificationApi.getNotifications()
           .then(async (notifications) => {
@@ -78,3 +81,7 @@ export const useNotificationStore = create<NotificationState>()(
     }
   )
 );
+
+function isFresh(timestamp: string | null, ttl: number) {
+  return Boolean(timestamp && Date.now() - new Date(timestamp).getTime() < ttl);
+}

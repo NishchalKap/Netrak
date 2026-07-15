@@ -28,19 +28,17 @@ export default function CaseDetailsScreen() {
   const { colors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string }>();
   const caseId = params.id ?? '';
-  const {
-    cases,
-    selectedCase,
-    fetchCaseById,
-    updateCase,
-    deleteCase,
-    isLoading,
-    isMutating,
-    error,
-    mutationError,
-    source,
-    lastSyncedAt,
-  } = useCaseStore();
+  const cases = useCaseStore((state) => state.cases);
+  const selectedCase = useCaseStore((state) => state.selectedCase);
+  const fetchCaseById = useCaseStore((state) => state.fetchCaseById);
+  const updateCase = useCaseStore((state) => state.updateCase);
+  const deleteCase = useCaseStore((state) => state.deleteCase);
+  const isLoading = useCaseStore((state) => state.isLoading);
+  const isMutating = useCaseStore((state) => state.isMutating);
+  const error = useCaseStore((state) => state.error);
+  const mutationError = useCaseStore((state) => state.mutationError);
+  const source = useCaseStore((state) => state.source);
+  const lastSyncedAt = useCaseStore((state) => state.lastSyncedAt);
   const caseItem = selectedCase?.id === caseId
     ? selectedCase
     : cases.find((item) => item.id === caseId) ?? null;

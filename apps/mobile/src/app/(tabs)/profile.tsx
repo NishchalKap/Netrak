@@ -16,7 +16,10 @@ import { User } from '@/types';
 
 export default function ProfileScreen() {
   const { colors } = useAppTheme();
-  const { profile, fetchProfile, isLoading, error } = useUserStore();
+  const profile = useUserStore((state) => state.profile);
+  const fetchProfile = useUserStore((state) => state.fetchProfile);
+  const isLoading = useUserStore((state) => state.isLoading);
+  const error = useUserStore((state) => state.error);
 
   useEffect(() => {
     if (!profile) void fetchProfile();
@@ -62,7 +65,9 @@ export default function ProfileScreen() {
 
 function ProfileEditor({ profile }: { profile: User }) {
   const { colors } = useAppTheme();
-  const { updateProfile, isSaving, error } = useUserStore();
+  const updateProfile = useUserStore((state) => state.updateProfile);
+  const isSaving = useUserStore((state) => state.isSaving);
+  const error = useUserStore((state) => state.error);
   const [name, setName] = useState(profile.name ?? '');
   const [phone, setPhone] = useState(profile.phone ?? '');
   const [district, setDistrict] = useState(profile.district ?? '');

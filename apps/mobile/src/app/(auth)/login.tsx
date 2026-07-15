@@ -11,7 +11,10 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function LoginScreen() {
   const { colors } = useAppTheme();
-  const { loginWithCredentials, isLoading, error, clearError } = useAuthStore();
+  const loginWithCredentials = useAuthStore((state) => state.loginWithCredentials);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);

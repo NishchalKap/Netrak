@@ -8,7 +8,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function Index() {
-  const { setMode } = useThemeStore();
+  const setMode = useThemeStore((state) => state.setMode);
   const { isDarkMode } = useAppTheme();
   const colors = isDarkMode ? ThemePalette.dark : ThemePalette.light;
   return (

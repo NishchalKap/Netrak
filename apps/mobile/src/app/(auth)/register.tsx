@@ -18,7 +18,10 @@ export default function RegisterScreen() {
     if (params.role === 'OFFICER' || params.role === 'ADMIN') return params.role;
     return 'CITIZEN';
   }, [params.role]);
-  const { registerWithCredentials, isLoading, error: authError, clearError } = useAuthStore();
+  const registerWithCredentials = useAuthStore((state) => state.registerWithCredentials);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const authError = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

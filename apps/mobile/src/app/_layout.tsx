@@ -11,7 +11,9 @@ void SplashScreen.preventAutoHideAsync();
 
 function RootLayoutInner() {
   const { paperTheme, colors, isDarkMode } = useAppTheme();
-  const { isHydrated, isAuthenticated, hydrate } = useAuthStore();
+  const isHydrated = useAuthStore((state) => state.isHydrated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hydrate = useAuthStore((state) => state.hydrate);
   const segments = useSegments();
   const router = useRouter();
   const reduceMotion = useSettingsStore((state) => state.reduceMotion);

@@ -26,6 +26,8 @@ interface CaseState {
 }
 
 let casesRequest: Promise<Case[]> | null = null;
+let selectedCaseRequestId = 0;
+const CASES_TTL_MS = 20000;
 
 export const useCaseStore = create<CaseState>((set, get) => ({
   cases: [],
@@ -36,8 +38,10 @@ export const useCaseStore = create<CaseState>((set, get) => ({
   mutationError: null,
   lastSyncedAt: null,
   source: 'idle',
-  fetchCases: async (_force = false) => {
+  fetchCases: async (force = false) => {
     if (casesRequest) return casesRequest;
+    const { cases, lastSyncedAt } = get();
+    if (!force && cases.length && isFresh(lastSyncedAt, CASES_TTL_MS)) return cases;
     set({ isLoading: true, error: null });
     casesRequest = caseApi.getCases()
       .then(async (items) => {
@@ -58,6 +62,7 @@ export const useCaseStore = create<CaseState>((set, get) => ({
     return casesRequest;
   },
   fetchCaseById: async (id) => {
+    const requestId = ++selectedCaseRequestId;
     const cached = get().cases.find((item) => item.id === id) ?? null;
     set({ selectedCase: cached, isLoading: !cached, error: null });
     try {
@@ -66,10 +71,14 @@ export const useCaseStore = create<CaseState>((set, get) => ({
       if (profile?.role === 'CITIZEN' && remote.userId !== profile.id) {
         throw new Error('This case is not available to your account.');
       }
-      set((state) => ({ selectedCase: remote, cases: upsertCase(state.cases, remote), isLoading: false, source: 'online', lastSyncedAt: new Date().toISOString() }));
+      if (requestId === selectedCaseRequestId) {
+        set((state) => ({ selectedCase: remote, cases: upsertCase(state.cases, remote), isLoading: false, source: 'online', lastSyncedAt: new Date().toISOString() }));
+      }
       return remote;
     } catch (error) {
-      set({ isLoading: false, source: cached ? 'cached' : 'idle', error: getApiErrorMessage(error, 'This case could not be loaded.') });
+      if (requestId === selectedCaseRequestId) {
+        set({ isLoading: false, source: cached ? 'cached' : 'idle', error: getApiErrorMessage(error, 'This case could not be loaded.') });
+      }
       return cached;
     }
   },
@@ -153,6 +162,10 @@ function normalizeCase(item: Case): Case {
 
 function upsertCase(cases: Case[], next: Case) {
   return cases.some((item) => item.id === next.id) ? cases.map((item) => item.id === next.id ? next : item) : [next, ...cases];
+}
+
+function isFresh(timestamp: string | null, ttl: number) {
+  return Boolean(timestamp && Date.now() - new Date(timestamp).getTime() < ttl);
 }
 
 function inferCategory(title: string, description: string) {

@@ -22,17 +22,15 @@ const evidenceTypes: EvidenceType[] = ['image', 'audio', 'video', 'document', 'c
 export default function UploadFlowScreen() {
   const { colors } = useAppTheme();
   const params = useLocalSearchParams<{ caseId?: string }>();
-  const {
-    cases,
-    fetchCases,
-    addEvidence,
-    isLoading,
-    isMutating,
-    error: fetchError,
-    mutationError,
-    source,
-    lastSyncedAt,
-  } = useCaseStore();
+  const cases = useCaseStore((state) => state.cases);
+  const fetchCases = useCaseStore((state) => state.fetchCases);
+  const addEvidence = useCaseStore((state) => state.addEvidence);
+  const isLoading = useCaseStore((state) => state.isLoading);
+  const isMutating = useCaseStore((state) => state.isMutating);
+  const fetchError = useCaseStore((state) => state.error);
+  const mutationError = useCaseStore((state) => state.mutationError);
+  const source = useCaseStore((state) => state.source);
+  const lastSyncedAt = useCaseStore((state) => state.lastSyncedAt);
   const [caseId, setCaseId] = useState(params.caseId ?? '');
   const [type, setType] = useState<EvidenceType>('image');
   const [label, setLabel] = useState('');

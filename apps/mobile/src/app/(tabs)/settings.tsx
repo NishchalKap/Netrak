@@ -18,25 +18,24 @@ type DiagnosticState = 'idle' | 'checking' | 'online' | 'offline';
 
 export default function SettingsScreen() {
   const { colors, isDarkMode } = useAppTheme();
-  const { mode, setMode } = useThemeStore();
-  const {
-    locationSharing,
-    voiceAlerts,
-    caseUpdateAlerts,
-    threatAlerts,
-    emergencyContact,
-    preferredLanguage,
-    compactMode,
-    reduceMotion,
-    setLocationSharing,
-    setVoiceAlerts,
-    setCaseUpdateAlerts,
-    setThreatAlerts,
-    setEmergencyContact,
-    setPreferredLanguage,
-    setCompactMode,
-    setReduceMotion,
-  } = useSettingsStore();
+  const mode = useThemeStore((state) => state.mode);
+  const setMode = useThemeStore((state) => state.setMode);
+  const locationSharing = useSettingsStore((state) => state.locationSharing);
+  const voiceAlerts = useSettingsStore((state) => state.voiceAlerts);
+  const caseUpdateAlerts = useSettingsStore((state) => state.caseUpdateAlerts);
+  const threatAlerts = useSettingsStore((state) => state.threatAlerts);
+  const emergencyContact = useSettingsStore((state) => state.emergencyContact);
+  const preferredLanguage = useSettingsStore((state) => state.preferredLanguage);
+  const compactMode = useSettingsStore((state) => state.compactMode);
+  const reduceMotion = useSettingsStore((state) => state.reduceMotion);
+  const setLocationSharing = useSettingsStore((state) => state.setLocationSharing);
+  const setVoiceAlerts = useSettingsStore((state) => state.setVoiceAlerts);
+  const setCaseUpdateAlerts = useSettingsStore((state) => state.setCaseUpdateAlerts);
+  const setThreatAlerts = useSettingsStore((state) => state.setThreatAlerts);
+  const setEmergencyContact = useSettingsStore((state) => state.setEmergencyContact);
+  const setPreferredLanguage = useSettingsStore((state) => state.setPreferredLanguage);
+  const setCompactMode = useSettingsStore((state) => state.setCompactMode);
+  const setReduceMotion = useSettingsStore((state) => state.setReduceMotion);
   const logout = useAuthStore((state) => state.logout);
   const [diagnostic, setDiagnostic] = useState<DiagnosticState>('idle');
   const version = Constants.expoConfig?.version ?? '1.0.0';
