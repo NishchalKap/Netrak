@@ -1,8 +1,11 @@
 import { prisma } from '../database/prisma';
 
 export class NotificationRepository {
-  async findAll() {
-    return prisma.notification.findMany();
+  async findAll(userId?: string) {
+    return prisma.notification.findMany({
+      where: userId ? { userId } : undefined,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async create(data: { message: string; userId: string }) {

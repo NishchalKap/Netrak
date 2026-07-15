@@ -28,6 +28,8 @@ npm run build
 
 The Vite config uses the runner loader on Windows so dependency resolution stays inside the application workspace.
 
+Authentication tokens use browser session storage and are cleared when the browser session closes. Theme preference remains in local storage. `VITE_` variables are public build-time configuration and must never contain secrets.
+
 ## Data policy
 
 The interface never fabricates operational records. Features without a documented API—assignments, internal notes, audit logs, organization management, GIS coordinates, chain of custody, and realtime streams—are represented as explicit capability boundaries. Future services can plug into the typed repository, GeoJSON, and realtime interfaces without replacing the UI architecture.

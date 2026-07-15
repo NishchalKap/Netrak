@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { env } from './env';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -11,12 +12,8 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api',
-        description: 'Local development gateway',
-      },
-      {
-        url: 'https://api.netrak.local/api',
-        description: 'Production-style staging gateway',
+        url: env.PUBLIC_API_URL ?? `http://localhost:${env.PORT}/api`,
+        description: env.PUBLIC_API_URL ? 'Configured gateway' : 'Local development gateway',
       },
     ],
     tags: [

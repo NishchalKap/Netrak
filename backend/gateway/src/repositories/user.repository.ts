@@ -16,4 +16,8 @@ export class UserRepository {
   async update(id: string, data: { name?: string; phone?: string; district?: string }) {
     return prisma.user.update({ where: { id }, data });
   }
+
+  async updatePassword(id: string, password: string) {
+    return prisma.user.update({ where: { id }, data: { password } });
+  }
 }

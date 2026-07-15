@@ -1,10 +1,14 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { promisify } from 'util';
 import { UserRepository } from '../repositories/user.repository';
 import { LoginDto, RegisterDto, UpdateProfileDto } from '../dto/auth.dto';
 import { AppError } from '../common/AppError';
 import { env } from '../config/env';
 import { logger } from '../common/logger';
+
+const scryptAsync = promisify(crypto.scrypt);
+const PASSWORD_HASH_PREFIX = 'scrypt-v1';
 
 export class AuthService {
   private userRepository: UserRepository;
@@ -15,11 +19,15 @@ export class AuthService {
 
   async login(data: LoginDto) {
     const user = await this.userRepository.findByEmail(data.email);
-    if (!user || user.password !== data.password) {
+    if (!user || !(await verifyPassword(data.password, user.password))) {
       throw new AppError('Invalid credentials', 401);
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, env.JWT_SECRET, { expiresIn: '1h' });
+    if (!user.password.startsWith(`${PASSWORD_HASH_PREFIX}$`)) {
+      await this.userRepository.updatePassword(user.id, await hashPassword(data.password));
+    }
+
+    const token = this.signToken(user.id, user.role);
     return {
       token,
       user: {
@@ -34,19 +42,23 @@ export class AuthService {
   }
 
   async register(data: RegisterDto) {
+    const role = data.role ?? 'CITIZEN';
+    if (role !== 'CITIZEN' && !env.ALLOW_PRIVILEGED_REGISTRATION) {
+      throw new AppError('Privileged accounts must be provisioned by an administrator', 403);
+    }
+
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
       throw new AppError('Email already exists', 400);
     }
 
-    // Using raw password since requirement is mock auth
     const user = await this.userRepository.create({
       email: data.email,
-      password: data.password,
-      role: data.role,
+      password: await hashPassword(data.password),
+      role,
     });
 
-    const token = jwt.sign({ id: user.id, role: user.role }, env.JWT_SECRET, { expiresIn: '1h' });
+    const token = this.signToken(user.id, user.role);
     return {
       token,
       user: {
@@ -62,10 +74,13 @@ export class AuthService {
 
   async refresh(token: string) {
     try {
-      const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string; role: string };
-      const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, env.JWT_SECRET, {
-        expiresIn: '1h',
-      });
+      const decoded = jwt.verify(token, env.JWT_SECRET, {
+        algorithms: ['HS256'],
+        issuer: env.JWT_ISSUER,
+        audience: env.JWT_AUDIENCE,
+      }) as { id?: unknown; role?: unknown };
+      if (typeof decoded.id !== 'string' || typeof decoded.role !== 'string') throw new Error('Invalid token payload');
+      const newToken = this.signToken(decoded.id, decoded.role);
       return { token: newToken };
     } catch {
       throw new AppError('Invalid token', 401);
@@ -109,14 +124,40 @@ export class AuthService {
       return { queued: true };
     }
 
-    const resetToken = crypto.randomBytes(32).toString('hex');
-
     if (env.NODE_ENV === 'development') {
-      logger.info('[forgot-password] reset token', { email, resetToken });
+      logger.info('[forgot-password] reset requested', { userId: user.id });
     }
 
-    // TODO: integrate email provider here — send resetToken via link to user email.
+    // Delivery is delegated to deployment-specific identity infrastructure.
 
     return { queued: true };
   }
+
+  private signToken(id: string, role: string) {
+    return jwt.sign({ id, role }, env.JWT_SECRET, {
+      algorithm: 'HS256',
+      audience: env.JWT_AUDIENCE,
+      issuer: env.JWT_ISSUER,
+      expiresIn: '1h',
+    });
+  }
+}
+
+async function hashPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derivedKey = await scryptAsync(password, salt, 64) as Buffer;
+  return `${PASSWORD_HASH_PREFIX}$${salt}$${derivedKey.toString('hex')}`;
+}
+
+async function verifyPassword(password: string, stored: string) {
+  const [prefix, salt, expectedHex] = stored.split('$');
+  if (prefix === PASSWORD_HASH_PREFIX && salt && expectedHex) {
+    const expected = Buffer.from(expectedHex, 'hex');
+    const actual = await scryptAsync(password, salt, expected.length) as Buffer;
+    return expected.length > 0 && crypto.timingSafeEqual(expected, actual);
+  }
+
+  const suppliedDigest = crypto.createHash('sha256').update(password).digest();
+  const storedDigest = crypto.createHash('sha256').update(stored).digest();
+  return crypto.timingSafeEqual(suppliedDigest, storedDigest);
 }

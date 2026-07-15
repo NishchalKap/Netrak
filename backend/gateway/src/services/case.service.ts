@@ -1,6 +1,7 @@
 import { CaseRepository } from '../repositories/case.repository';
 import { CreateCaseDto, UpdateCaseDto } from '../dto/case.dto';
 import { AppError } from '../common/AppError';
+import { AuthenticatedUser } from '../middleware/auth.middleware';
 
 export class CaseService {
   private caseRepository: CaseRepository;
@@ -9,13 +10,14 @@ export class CaseService {
     this.caseRepository = new CaseRepository();
   }
 
-  async getAllCases() {
-    return this.caseRepository.findAll();
+  async getAllCases(actor: AuthenticatedUser) {
+    return this.caseRepository.findAll(actor.role === 'CITIZEN' ? actor.id : undefined);
   }
 
-  async getCaseById(id: string) {
+  async getCaseById(id: string, actor: AuthenticatedUser) {
     const caseItem = await this.caseRepository.findById(id);
     if (!caseItem) throw new AppError('Case not found', 404);
+    this.ensureAccess(caseItem.userId, actor);
     return caseItem;
   }
 
@@ -23,15 +25,21 @@ export class CaseService {
     return this.caseRepository.create({ ...data, userId });
   }
 
-  async updateCase(id: string, data: UpdateCaseDto) {
+  async updateCase(id: string, data: UpdateCaseDto, actor: AuthenticatedUser) {
     const caseItem = await this.caseRepository.findById(id);
     if (!caseItem) throw new AppError('Case not found', 404);
+    this.ensureAccess(caseItem.userId, actor);
     return this.caseRepository.update(id, data);
   }
 
-  async deleteCase(id: string) {
+  async deleteCase(id: string, actor: AuthenticatedUser) {
     const caseItem = await this.caseRepository.findById(id);
     if (!caseItem) throw new AppError('Case not found', 404);
+    this.ensureAccess(caseItem.userId, actor);
     return this.caseRepository.delete(id);
+  }
+
+  private ensureAccess(ownerId: string, actor: AuthenticatedUser) {
+    if (actor.role === 'CITIZEN' && ownerId !== actor.id) throw new AppError('Case not found', 404);
   }
 }

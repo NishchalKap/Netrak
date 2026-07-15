@@ -16,7 +16,8 @@ Expo Router client for Netrak's public-safety platform. The app consumes the exi
 ```text
 npm run lint
 npm run typecheck
+npm run export
 npx expo start
 ```
 
-The app stores authentication tokens in SecureStore on native platforms. Theme, accessibility, alert preferences, and local notification read state persist between launches.
+The app stores authentication tokens in SecureStore on native platforms and session storage in Expo Web. Theme, accessibility, alert preferences, and local notification read state persist between launches. Signed Android and iOS binaries require deployment-owned EAS credentials and store identifiers; `npm run export` validates the JavaScript and asset bundles for all supported platforms without fabricating those credentials.

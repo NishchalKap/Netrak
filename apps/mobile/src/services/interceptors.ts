@@ -1,4 +1,4 @@
-import { AxiosError, InternalAxiosRequestConfig, create } from 'axios';
+import { AxiosError, CanceledError, InternalAxiosRequestConfig, create } from 'axios';
 import { axiosInstance } from './axios';
 import { API_URL, RETRY_ATTEMPTS, TIMEOUT } from './config';
 import { tokenStorage } from './tokenStorage';
@@ -23,6 +23,7 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const request = error.config as RetryConfig | undefined;
     if (!request) return Promise.reject(error);
+    if (error.code === 'ERR_CANCELED' || request.signal?.aborted) return Promise.reject(error);
 
     if (error.response?.status === 401 && !request._authRetried && !request.url?.includes('/auth/refresh')) {
       request._authRetried = true;
@@ -47,7 +48,7 @@ axiosInstance.interceptors.response.use(
     const retryCount = request._retryCount ?? 0;
     if (retryable && retryCount < RETRY_ATTEMPTS) {
       request._retryCount = retryCount + 1;
-      await delay(300 * 2 ** retryCount);
+      await delay(300 * 2 ** retryCount, request.signal);
       return axiosInstance(request);
     }
 
@@ -64,6 +65,17 @@ async function refreshToken() {
   return nextToken;
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function delay(ms: number, signal?: InternalAxiosRequestConfig['signal']) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(new CanceledError('Request cancelled'));
+    const onAbort = () => {
+      clearTimeout(timeout);
+      reject(new CanceledError('Request cancelled'));
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener?.('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener?.('abort', onAbort, { once: true });
+  });
 }

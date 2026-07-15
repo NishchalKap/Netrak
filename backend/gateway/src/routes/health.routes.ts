@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { prisma } from '../database/prisma';
+import { logger } from '../common/logger';
 
 const router = Router();
 
@@ -27,12 +29,22 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.get('/', (_req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Service is healthy',
-    data: { status: 'UP' },
-  });
+router.get('/', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: 'success',
+      message: 'Service is ready',
+      data: { status: 'UP', database: 'UP' },
+    });
+  } catch (error) {
+    logger.warn('Readiness check failed', { message: error instanceof Error ? error.message : 'Unknown database error' });
+    res.status(503).json({
+      status: 'error',
+      message: 'Service is not ready',
+      data: { status: 'DEGRADED', database: 'DOWN' },
+    });
+  }
 });
 
 export default router;

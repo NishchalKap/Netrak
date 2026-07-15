@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { validate } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
-import { loginSchema, registerSchema, updateProfileSchema, forgotPasswordSchema } from '../dto/auth.dto';
+import { loginSchema, registerSchema, updateProfileSchema, forgotPasswordSchema, refreshTokenSchema } from '../dto/auth.dto';
 
 const router = Router();
 const authController = new AuthController();
@@ -95,7 +95,7 @@ router.post('/register', validate(registerSchema), authController.register);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.post('/refresh', authController.refresh);
+router.post('/refresh', validate(refreshTokenSchema), authController.refresh);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.patch('/profile', authenticate, validate(updateProfileSchema), authContro
  * /auth/forgot-password:
  *   post:
  *     summary: Trigger password reset link
- *     description: Triggers a password reset workflow. In development, logs the generated token to console.
+ *     description: Queues a password reset workflow without revealing whether an account exists.
  *     tags: [Auth]
  *     security: []
  *     requestBody:

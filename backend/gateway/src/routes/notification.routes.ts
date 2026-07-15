@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { NotificationController } from '../controllers/notification.controller';
 import { validate } from '../middleware/validate.middleware';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, authorize } from '../middleware/auth.middleware';
 import { createNotificationSchema } from '../dto/notification.dto';
 
 const router = Router();
@@ -69,6 +69,6 @@ router.get('/', notificationController.getNotifications);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.post('/', validate(createNotificationSchema), notificationController.createNotification);
+router.post('/', authorize(['OFFICER', 'ADMIN']), validate(createNotificationSchema), notificationController.createNotification);
 
 export default router;

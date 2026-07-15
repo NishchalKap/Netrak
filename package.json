@@ -6,10 +6,15 @@
   "scripts": {
     "install:gateway": "npm install --prefix backend/gateway",
     "install:operations": "npm install --prefix apps/operations",
+    "install:mobile": "npm install --prefix apps/mobile",
+    "install:all": "npm run install:gateway && npm run install:operations && npm run install:mobile",
     "prisma:generate": "cd backend/gateway && npx prisma generate",
+    "prisma:validate": "npm run prisma:validate --prefix backend/gateway",
+    "test": "npm run test --prefix backend/gateway",
     "lint": "npm run lint --prefix backend/gateway && npm run lint --prefix apps/operations && npm run lint --prefix apps/mobile",
     "typecheck": "npm run typecheck --prefix backend/gateway && npm run typecheck --prefix apps/operations && npm run typecheck --prefix apps/mobile",
     "build": "npm run build --prefix backend/gateway && npm run build --prefix apps/operations",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run prisma:validate && npm run build",
     "dev:operations": "npm run dev --prefix apps/operations",
     "dev": "npm run dev --prefix backend/gateway",
     "start": "npm run start --prefix backend/gateway"

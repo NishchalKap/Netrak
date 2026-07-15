@@ -22,13 +22,15 @@ The web workspace opens on `http://localhost:4173` and uses `http://localhost:30
 
 ## Run the platform checks
 
-Install the dependencies in each application before the first run, then execute:
+Install each application and execute the release quality gate:
 
 ```bash
-npm run lint
-npm run typecheck
-npm run build
+npm run install:all
+npm run verify
+npm run export --prefix apps/mobile
 ```
+
+Copy the relevant `.env.example` before starting services. Production deployments must supply a unique gateway JWT secret, PostgreSQL connection, and explicit HTTPS CORS origins. Never place secrets in `VITE_` or `EXPO_PUBLIC_` variables because those values are bundled into clients.
 
 ## Operational platform architecture
 
@@ -49,3 +51,5 @@ See [operational-platform.md](docs/architecture/operational-platform.md) for API
 - [Architecture summary](docs/architecture/architecture-summary.md)
 - [Frontend contract](docs/frontend-contract.md)
 - [Design system](docs/design/DESIGN.md)
+- [Release candidate runbook](docs/release-candidate.md)
+- [Security policy](SECURITY.md)

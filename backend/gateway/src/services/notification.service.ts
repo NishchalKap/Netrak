@@ -1,5 +1,6 @@
 import { NotificationRepository } from '../repositories/notification.repository';
 import { CreateNotificationDto } from '../dto/notification.dto';
+import { AuthenticatedUser } from '../middleware/auth.middleware';
 
 export class NotificationService {
   private notificationRepository: NotificationRepository;
@@ -8,8 +9,8 @@ export class NotificationService {
     this.notificationRepository = new NotificationRepository();
   }
 
-  async getAllNotifications() {
-    return this.notificationRepository.findAll();
+  async getAllNotifications(actor: AuthenticatedUser) {
+    return this.notificationRepository.findAll(actor.role === 'CITIZEN' ? actor.id : undefined);
   }
 
   async createNotification(data: CreateNotificationDto) {

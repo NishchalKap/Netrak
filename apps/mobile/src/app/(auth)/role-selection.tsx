@@ -9,10 +9,15 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { UserRole } from '@/types';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-const roles: { label: string; role: UserRole; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }[] = [
-  { label: 'Citizen', role: 'CITIZEN', icon: 'account-heart-outline' },
-  { label: 'Police Officer', role: 'OFFICER', icon: 'shield-account-outline' },
-  { label: 'Admin', role: 'ADMIN', icon: 'account-cog-outline' },
+const roles: {
+  label: string;
+  role: UserRole;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  selfService: boolean;
+}[] = [
+  { label: 'Create citizen account', role: 'CITIZEN', icon: 'account-heart-outline', selfService: true },
+  { label: 'Officer sign in', role: 'OFFICER', icon: 'shield-account-outline', selfService: false },
+  { label: 'Administrator sign in', role: 'ADMIN', icon: 'account-cog-outline', selfService: false },
 ];
 
 export default function RoleSelectionScreen() {
@@ -21,7 +26,7 @@ export default function RoleSelectionScreen() {
     <ScreenContainer scroll contentContainerStyle={styles.scroll}>
       <Typography variant="h1">Select Role</Typography>
       <Typography variant="body" style={[styles.subtitle, { color: colors.muted }]}>
-        Choose the account boundary.
+        Citizen accounts can be created here. Organization accounts are issued by an authorized administrator.
       </Typography>
       <View style={styles.list}>
         {roles.map((item) => (
@@ -30,7 +35,11 @@ export default function RoleSelectionScreen() {
               title={item.label}
               iconName={item.icon}
               variant={item.role === 'CITIZEN' ? 'primary' : 'outline'}
-              onPress={() => router.push({ pathname: '/(auth)/register', params: { role: item.role } })}
+              onPress={() =>
+                item.selfService
+                  ? router.push({ pathname: '/(auth)/register', params: { role: item.role } })
+                  : router.push('/(auth)/login')
+              }
             />
           </Card>
         ))}

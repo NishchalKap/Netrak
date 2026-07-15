@@ -1,8 +1,9 @@
 import { prisma } from '../database/prisma';
 
 export class CaseRepository {
-  async findAll() {
+  async findAll(userId?: string) {
     return prisma.case.findMany({
+      where: userId ? { userId } : undefined,
       include: { evidence: true, timeline: true },
       orderBy: { createdAt: 'desc' },
     });

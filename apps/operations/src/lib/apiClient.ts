@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, create, isAxiosError } from 'axios';
+import axios, { AxiosError, CanceledError, InternalAxiosRequestConfig, create, isAxiosError } from 'axios';
 import type { ApiEnvelope } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -21,9 +21,15 @@ interface RequestOptions {
 }
 
 export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
+  get: () => sessionStorage.getItem(TOKEN_KEY),
+  set: (token: string) => {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.setItem(TOKEN_KEY, token);
+  },
+  clear: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  },
 };
 
 const client = create({ baseURL: API_URL, timeout: TIMEOUT, headers: { 'Content-Type': 'application/json' } });
@@ -65,7 +71,7 @@ client.interceptors.response.use(
     const retryCount = request._retryCount ?? 0;
     if (retryable && retryCount < 2) {
       request._retryCount = retryCount + 1;
-      await new Promise((resolve) => window.setTimeout(resolve, 300 * 2 ** retryCount));
+      await delay(300 * 2 ** retryCount, request.signal);
       return client(request);
     }
     return Promise.reject(error);
@@ -106,4 +112,19 @@ export function getErrorMessage(error: unknown, fallback = 'The request could no
 
 export function isNetworkError(error: unknown) {
   return isAxiosError(error) && !error.response;
+}
+
+function delay(ms: number, signal?: InternalAxiosRequestConfig['signal']) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(new CanceledError('Request cancelled'));
+    const onAbort = () => {
+      window.clearTimeout(timeout);
+      reject(new CanceledError('Request cancelled'));
+    };
+    const timeout = window.setTimeout(() => {
+      signal?.removeEventListener?.('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener?.('abort', onAbort, { once: true });
+  });
 }
