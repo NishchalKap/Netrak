@@ -3,7 +3,7 @@ const { spawnSync } = require('node:child_process');
 const prismaCli = require.resolve('prisma/build/index.js');
 const validationEnvironment = {
   ...process.env,
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://validation:validation@localhost:5432/netrak_validation',
+  DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
 };
 
 const result = spawnSync(process.execPath, [prismaCli, 'validate'], {
