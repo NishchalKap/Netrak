@@ -15,10 +15,15 @@
     "prototype:syntax": "python -m compileall -q netrak_speech_intelligence/netrak_speech_intelligence",
     "lint": "npm run lint --prefix backend/gateway && npm run lint --prefix apps/operations && npm run lint --prefix apps/mobile",
     "typecheck": "npm run typecheck --prefix backend/gateway && npm run typecheck --prefix apps/operations && npm run typecheck --prefix apps/mobile",
-    "build": "npm run build --prefix backend/gateway && npm run build --prefix apps/operations",
+    "build:gateway": "npm run build --prefix backend/gateway",
+    "build:operations": "npm run build --prefix apps/operations",
+    "build:mobile": "npm run export --prefix apps/mobile",
+    "build": "npm run build:gateway && npm run build:operations && npm run build:mobile",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run prisma:validate && npm run prototype:syntax && npm run build",
+    "dev:gateway": "npm run dev --prefix backend/gateway",
     "dev:operations": "npm run dev --prefix apps/operations",
-    "dev": "npm run dev --prefix backend/gateway",
+    "dev:mobile": "npm run start --prefix apps/mobile",
+    "dev": "npm run dev:gateway",
     "start": "npm run start --prefix backend/gateway"
   }
 }

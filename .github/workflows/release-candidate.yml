@@ -23,6 +23,7 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netrak_ci
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/netrak_ci
       JWT_SECRET: ci-only-secret-with-at-least-thirty-two-characters
       JWT_ISSUER: netrak-gateway
       JWT_AUDIENCE: netrak-clients
