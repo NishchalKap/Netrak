@@ -7,8 +7,6 @@ export const apiClient = {
     axiosInstance.get<ApiEnvelope<T> | T>(url, { params }).then((res) => unwrapResponse(res.data)),
   post: <T, TBody = unknown>(url: string, data?: TBody): Promise<T> =>
     axiosInstance.post<ApiEnvelope<T> | T>(url, data).then((res) => unwrapResponse(res.data)),
-  put: <T, TBody = unknown>(url: string, data?: TBody): Promise<T> =>
-    axiosInstance.put<ApiEnvelope<T> | T>(url, data).then((res) => unwrapResponse(res.data)),
   patch: <T, TBody = unknown>(url: string, data?: TBody): Promise<T> =>
     axiosInstance.patch<ApiEnvelope<T> | T>(url, data).then((res) => unwrapResponse(res.data)),
   delete: <T>(url: string): Promise<T> =>

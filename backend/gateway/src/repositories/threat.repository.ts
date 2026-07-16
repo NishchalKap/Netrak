@@ -1,13 +1,14 @@
 import { prisma } from '../database/prisma';
+import { env } from '../config/env';
 
-const THREAT_SEEDS = [
+const REFERENCE_ADVISORIES = [
   {
     title: 'Digital arrest video-call scripts',
     category: 'digital_arrest',
     level: 'critical',
-    region: 'National',
+    region: 'General guidance',
     summary:
-      'Impersonators are using forged warrants, isolation language, and pressure to transfer verification funds.',
+      'Warning pattern: forged warrants, isolation language, and pressure to transfer verification funds.',
     indicators: [
       'Claims of CBI or customs case',
       'Instruction to stay on video call',
@@ -18,9 +19,9 @@ const THREAT_SEEDS = [
     title: 'Swapped QR and collect requests',
     category: 'upi_fraud',
     level: 'high',
-    region: 'Urban retail corridors',
+    region: 'General guidance',
     summary:
-      'Reports continue around QR stickers being replaced and collect requests being framed as refunds.',
+      'Warning pattern: replaced QR stickers and collect requests framed as refunds.',
     indicators: [
       'Unexpected collect request',
       'New beneficiary after scan',
@@ -31,9 +32,9 @@ const THREAT_SEEDS = [
     title: 'Fake trading group onboarding',
     category: 'investment_scam',
     level: 'high',
-    region: 'Messaging platforms',
+    region: 'General guidance',
     summary:
-      'Victims are being moved from chat groups into unregistered trading apps with staged profits.',
+      'Warning pattern: chat-group recruitment into unregistered trading apps displaying staged profits.',
     indicators: [
       'Guaranteed returns',
       'Telegram or WhatsApp advisor',
@@ -41,12 +42,12 @@ const THREAT_SEEDS = [
     ],
   },
   {
-    title: 'Counterfeit INR 500 circulation',
+    title: 'Counterfeit currency warning signs',
     category: 'counterfeit_currency',
     level: 'elevated',
-    region: 'Bank counters and small retail',
+    region: 'General guidance',
     summary:
-      'Counterfeit INR 500 detections remain concentrated at bank and merchant contact points.',
+      'Reference checks for suspicious notes include microtext, security-thread, and serial-pattern inspection.',
     indicators: [
       'Blurred microtext',
       'Weak security thread',
@@ -57,9 +58,9 @@ const THREAT_SEEDS = [
     title: 'SIM swap recovery-window abuse',
     category: 'sim_swap',
     level: 'elevated',
-    region: 'Digital banking users',
+    region: 'General guidance',
     summary:
-      'Attackers are using short SIM outage windows to reset account access and move funds.',
+      'Warning pattern: sudden SIM outage followed by password resets and first-time transfers.',
     indicators: [
       'Sudden network loss',
       'Password reset alerts',
@@ -67,14 +68,16 @@ const THREAT_SEEDS = [
     ],
   },
 ];
+let seedPromise: Promise<void> | null = null;
 
 export class ThreatRepository {
   async findAll() {
     const count = await prisma.threat.count();
-    if (count === 0) {
-      await this.seed();
+    if (count === 0 && env.LOAD_REFERENCE_ADVISORIES) {
+      seedPromise ??= this.seed().finally(() => { seedPromise = null; });
+      await seedPromise;
     }
-    return prisma.threat.findMany({ orderBy: { updatedAt: 'desc' } });
+    return prisma.threat.findMany({ orderBy: { updatedAt: 'desc' }, take: env.MAX_LIST_RESULTS });
   }
 
   async findById(id: string) {
@@ -82,8 +85,9 @@ export class ThreatRepository {
   }
 
   private async seed() {
+    if (await prisma.threat.count()) return;
     await prisma.threat.createMany({
-      data: THREAT_SEEDS.map((t) => ({
+      data: REFERENCE_ADVISORIES.map((t) => ({
         ...t,
         indicators: t.indicators,
       })),

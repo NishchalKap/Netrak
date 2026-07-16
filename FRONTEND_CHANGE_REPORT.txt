@@ -1,0 +1,138 @@
+NETRAK V1.0 RELEASE-READINESS REPORT
+Updated: 16 July 2026
+Branch: feat/frontend-phase-1-redesign
+
+1. EXECUTIVE SUMMARY
+
+Netrak now presents a truthful, release-candidate experience across the citizen
+Expo application, the operations web workspace, and the Node gateway. Features
+that are implemented are connected to the existing API contracts. Capabilities
+that require missing infrastructure or contracts are explicitly identified as
+limitations or future scope instead of being represented by inactive controls,
+mock success states, or unverified claims.
+
+The authoritative product boundary is docs/release-scope.md. Research,
+architecture, design, and prototype documents are labelled as direction rather
+than evidence of deployed functionality.
+
+2. RELEASE-READY CAPABILITIES
+
+- Citizen self-registration, authentication, session restoration, bounded token
+  refresh, logout, and profile read/update.
+- Citizen-owned case creation, listing, detail, update, deletion, and persisted
+  timeline history.
+- Incident category, reported risk, and location metadata persisted through the
+  existing case contract.
+- Evidence type, label, reference, and notes stored as case metadata.
+- Deployment-configured threat advisory feed with optional development reference
+  guidance disabled by default in production.
+- Backend notification feed with ownership scoping; citizen read markers are
+  intentionally device-local because no read-mutation endpoint exists.
+- Operations authentication for managed officer/admin accounts, case queue,
+  investigation workspace, filters, pagination, record-derived analytics,
+  timeline, evidence metadata, advisory view, and gateway health visibility.
+- Dark, light, and system themes; responsive phone/tablet/web layouts; reduced
+  motion; focus states; accessible labels; loading, empty, offline, retry, and
+  error states.
+
+3. RELIABILITY AND SECURITY CORRECTIONS
+
+- Fixed case creation so category, risk, and location are persisted instead of
+  being overlaid only in local state.
+- Fixed refresh handling for recently expired access tokens using a bounded,
+  configurable grace period while retaining signature, issuer, audience,
+  algorithm, identity, and role validation.
+- Profile optional fields can now be cleared with explicit null values; empty
+  update bodies are rejected.
+- Malformed JSON is returned as a human-readable 400 response rather than a 500.
+- Citizen and operations clients reject tokens for the wrong workspace role
+  before persisting them.
+- Citizen case and notification visibility is ownership-scoped.
+- External evidence references are accepted only when they use HTTPS.
+- API errors are normalized; raw backend errors are not rendered to end users.
+- Retry behavior is restricted for mutations to avoid duplicate submissions.
+- Authentication endpoints use bounded rate limits; refresh tokens are
+  one-time within the running gateway process and replay attempts are rejected.
+- Strict request schemas and UUID parameter validation reject unknown or
+  malformed input before it reaches Prisma.
+- Registration passwords use scrypt with a random salt and a 12-character
+  minimum; production rejects placeholder signing secrets and insecure origins.
+- Browser security headers, restrictive content policies, no-store handling for
+  sensitive routes, and sanitized request IDs are enforced by the gateway and
+  operations deployment manifest.
+
+4. TRUTHFUL PRODUCT BOUNDARIES
+
+- Password recovery is a deployment integration boundary. The gateway returns
+  503 until a real email/SMS provider is configured, and the clients do not
+  claim that a reset message was queued or sent.
+- Evidence supports metadata references only. Camera/gallery/document transfer,
+  binary upload, object storage, cryptographic hashes, and chain of custody are
+  future scope.
+- SOS creates a critical case and can open the device dialer. It does not claim
+  to dispatch emergency services, track a citizen, or share live location.
+- Command views poll configured API data. They do not claim realtime national
+  monitoring, an authoritative CERT-In feed, or a live stream.
+- Location views display reported text. GIS coordinates, geocoding, and a true
+  operational heat map are future scope.
+- Prioritization and statistics use deterministic record-derived calculations.
+  No AI inference is presented as active.
+- The speech/deepfake directory is an experimental standalone prototype. It is
+  not connected to the gateway or applications and is excluded from v1.0.
+- User administration, permissions mutation, audit logs, officer assignment,
+  private notes, push delivery preferences, and realtime channels are future
+  scope until supported backend contracts exist.
+
+5. DESIGN AND EXPERIENCE
+
+- The dark-first design system uses token-driven charcoal surfaces, restrained
+  cyan accent, semantic status colors, editorial typography, consistent spacing,
+  reusable controls, and subtle motion.
+- Citizen screens prioritize reassurance, plain language, one-handed actions,
+  and generous whitespace.
+- Operations screens prioritize density, scanning, filtering, provenance, and
+  operational clarity without cyberpunk, terminal, neon, or hacker aesthetics.
+- Role selection exposes citizen self-registration only and directs managed
+  organization users to the separate Operations workspace.
+- Nonfunctional settings controls were removed and replaced by an explicit
+  future-capability notice.
+
+6. VALIDATION EVIDENCE
+
+The release pipeline covers:
+
+- Gateway, operations, and mobile linting.
+- Gateway, operations, and mobile TypeScript checks.
+- Gateway security/contract tests and PostgreSQL-backed integration contracts in
+  CI, including ownership, workflow, timeline, evidence, and notification paths.
+- Operations formatting, HTTPS-reference, risk, and GeoJSON-boundary tests.
+- Prisma schema validation.
+- Experimental Python prototype syntax compilation.
+- Gateway and operations production builds.
+- Expo Android, iOS, and web export.
+- Browser smoke checks for citizen and operations entry points, role boundaries,
+  responsive layout, password-recovery boundary, and console errors.
+- Gateway runtime checks for liveness, readiness, OpenAPI, malformed JSON, and
+  unavailable password-recovery delivery.
+
+Final results for the current working tree are recorded in the handoff produced
+with this report. A complete database-backed end-to-end run requires PostgreSQL,
+and container validation requires Docker; neither service is available in the
+current local environment, so those checks remain CI/deployment responsibilities.
+
+7. DEMONSTRATION RULE
+
+Do not describe Netrak v1.0 as dispatching emergency services, monitoring
+citizens, uploading binary files, streaming live national intelligence,
+performing active AI inference, or sending password-reset messages. Demonstrate
+the implemented authentication, reporting, case, advisory, evidence-reference,
+notification, and operational workflows, and state the documented limitations
+when asked.
+
+8. AUTHORITATIVE REFERENCES
+
+- README.md
+- docs/release-scope.md
+- docs/release-candidate.md
+- docs/frontend-contract.md
+- backend/gateway/src/config/swagger.ts

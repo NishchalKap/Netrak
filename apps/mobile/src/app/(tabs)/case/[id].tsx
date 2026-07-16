@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -9,190 +9,185 @@ import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonList } from '@/components/ui/SkeletonList';
+import { SyncStatus } from '@/components/ui/SyncStatus';
 import { EvidenceList } from '@/components/evidence/EvidenceList';
 import { useCaseStore } from '@/store/caseStore';
-import { useNotificationStore } from '@/store/notificationStore';
-import { CaseStatus } from '@/types';
-import { Colors } from '@/constants';
-import { formatDateTime, getIncidentCategoryLabel, getRiskLabel, getStatusLabel } from '@/utils';
-
-const nextStatus: Record<CaseStatus, CaseStatus> = {
-  OPEN: 'IN_PROGRESS',
-  IN_PROGRESS: 'ESCALATED',
-  ESCALATED: 'CLOSED',
-  CLOSED: 'CLOSED',
-};
+import { formatDateTime, getIncidentCategoryLabel, getRiskLabel } from '@/utils';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function CaseDetailsScreen() {
+  const { colors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string }>();
   const caseId = params.id ?? '';
-  const { cases, selectedCase, fetchCaseById, updateCase } = useCaseStore();
-  const addLocalNotification = useNotificationStore((state) => state.addLocalNotification);
-  const caseItem = selectedCase?.id === caseId ? selectedCase : cases.find((item) => item.id === caseId) ?? null;
+  const cases = useCaseStore((state) => state.cases);
+  const selectedCase = useCaseStore((state) => state.selectedCase);
+  const fetchCaseById = useCaseStore((state) => state.fetchCaseById);
+  const deleteCase = useCaseStore((state) => state.deleteCase);
+  const isLoading = useCaseStore((state) => state.isLoading);
+  const isMutating = useCaseStore((state) => state.isMutating);
+  const error = useCaseStore((state) => state.error);
+  const mutationError = useCaseStore((state) => state.mutationError);
+  const source = useCaseStore((state) => state.source);
+  const lastSyncedAt = useCaseStore((state) => state.lastSyncedAt);
+  const caseItem = selectedCase?.id === caseId
+    ? selectedCase
+    : cases.find((item) => item.id === caseId) ?? null;
 
   useEffect(() => {
-    if (caseId) fetchCaseById(caseId);
+    if (caseId) void fetchCaseById(caseId);
   }, [caseId, fetchCaseById]);
 
-  const nextAction = useMemo(() => {
-    if (!caseItem || caseItem.status === 'CLOSED') return null;
-    const next = nextStatus[caseItem.status];
-    return { status: next, label: `Mark ${getStatusLabel(next)}` };
-  }, [caseItem]);
-
-  const handleStatusUpdate = async () => {
-    if (!caseItem || !nextAction) return;
-    const updated = await updateCase(caseItem.id, { status: nextAction.status });
-    if (updated) addLocalNotification(`Case updated: ${getStatusLabel(updated.status)}`, 'case');
+  const handleDelete = () => {
+    if (!caseItem || caseItem.status !== 'OPEN') return;
+    Alert.alert(
+      'Delete this case?',
+      'This permanently removes the case and its evidence references. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete case',
+          style: 'destructive',
+          onPress: async () => {
+            if (await deleteCase(caseItem.id)) router.replace('/(tabs)/history');
+          },
+        },
+      ]
+    );
   };
+
+  const back = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
+      style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      onPress={() => router.back()}
+    >
+      <MaterialCommunityIcons name="arrow-left" size={21} color={colors.text} />
+    </Pressable>
+  );
+
+  if (isLoading && !caseItem) {
+    return <ScreenContainer>{back}<SkeletonList count={2} /></ScreenContainer>;
+  }
 
   if (!caseItem) {
     return (
       <ScreenContainer>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={Colors.light.text} />
-        </Pressable>
-        <EmptyState iconName="folder-alert-outline" title="Case not found" message="The selected case is unavailable." />
+        {back}
+        <SyncStatus error={error} onRetry={() => { void fetchCaseById(caseId); }} />
+        <EmptyState
+          iconName="folder-alert-outline"
+          title={error ? 'Case unavailable' : 'Case not found'}
+          message={error ?? 'The selected case is unavailable or no longer accessible.'}
+        />
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer scroll>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <MaterialCommunityIcons name="arrow-left" size={22} color={Colors.light.text} />
-      </Pressable>
-
-      <Typography variant="h1">{caseItem.title}</Typography>
+    <ScreenContainer
+      scroll
+      refreshing={isLoading}
+      onRefresh={() => { void fetchCaseById(caseId); }}
+    >
+      {back}
+      <SyncStatus
+        error={error}
+        cached={source === 'cached'}
+        lastSyncedAt={lastSyncedAt}
+        onRetry={() => { void fetchCaseById(caseId); }}
+      />
+      <Text style={[styles.eyebrow, { color: colors.tint }]}>CASE FILE / {caseItem.id.slice(-8).toUpperCase()}</Text>
+      <Typography variant="h1" style={styles.title}>{caseItem.title}</Typography>
       <View style={styles.badges}>
         <StatusBadge value={caseItem.status} />
         <StatusBadge value={caseItem.riskLevel ?? 'medium'} />
       </View>
-
-      <Card style={styles.section}>
-        <Text style={styles.label}>Category</Text>
-        <Text style={styles.value}>{getIncidentCategoryLabel(caseItem.category)}</Text>
-        <Text style={styles.label}>Risk</Text>
-        <Text style={styles.value}>{getRiskLabel(caseItem.riskLevel)}</Text>
-        <Text style={styles.label}>Location</Text>
-        <Text style={styles.value}>{caseItem.location ?? 'Location pending'}</Text>
-        <Text style={styles.label}>Updated</Text>
-        <Text style={styles.value}>{formatDateTime(caseItem.updatedAt)}</Text>
+      <Card style={styles.summary}>
+        <Text style={[styles.description, { color: colors.text }]}>{caseItem.description}</Text>
+        <View style={[styles.metaLine, { borderTopColor: colors.border }]}>
+          <Meta icon="tag-outline" label="Category" value={getIncidentCategoryLabel(caseItem.category)} colors={colors} />
+          <Meta icon="map-marker-outline" label="Location" value={caseItem.location ?? 'Pending'} colors={colors} />
+        </View>
       </Card>
-
-      <Card style={styles.section}>
-        <Text style={styles.description}>{caseItem.description}</Text>
-      </Card>
-
-      <View style={styles.actions}>
-        <Button
-          title="Upload Evidence"
-          iconName="file-upload-outline"
-          onPress={() => router.push({ pathname: '/(tabs)/upload', params: { caseId: caseItem.id } })}
-        />
-        {nextAction && (
-          <Button title={nextAction.label} iconName="progress-check" variant="outline" onPress={handleStatusUpdate} />
-        )}
-      </View>
-
-      <SectionHeader title="Evidence" />
-      <EvidenceList evidence={caseItem.evidence ?? []} />
-
-      <SectionHeader title="Timeline" />
+      <Button
+        title="Add evidence"
+        iconName="paperclip"
+        onPress={() => router.push({ pathname: '/(tabs)/upload', params: { caseId: caseItem.id } })}
+      />
+      {mutationError && <Text accessibilityRole="alert" style={[styles.actionError, { color: colors.danger }]}>{mutationError}</Text>}
+      <SectionHeader title="Case timeline" />
       <View style={styles.timeline}>
-        {(caseItem.timeline ?? []).map((event) => (
+        {(caseItem.timeline?.length ? caseItem.timeline : [{ id: `created-${caseItem.id}`, title: 'Case created', detail: 'Timestamp recorded by the case service.', createdAt: caseItem.createdAt }]).map((event, index, events) => (
           <View key={event.id} style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>{event.title}</Text>
-              <Text style={styles.timelineDetail}>{event.detail}</Text>
-              <Text style={styles.timelineDate}>{formatDateTime(event.createdAt)}</Text>
+            <View style={styles.rail}>
+              <View style={[styles.timelineDot, { backgroundColor: index === 0 ? colors.tint : colors.muted }]} />
+              {index < events.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.border }]} />}
+            </View>
+            <View style={[styles.timelineContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.timelineTitle, { color: colors.text }]}>{event.title}</Text>
+              <Text style={[styles.timelineDetail, { color: colors.muted }]}>{event.detail}</Text>
+              <Text style={[styles.timelineDate, { color: colors.muted }]}>{formatDateTime(event.createdAt)}</Text>
             </View>
           </View>
         ))}
       </View>
+      <SectionHeader title="Evidence" />
+      <EvidenceList evidence={caseItem.evidence ?? []} />
+      <SectionHeader title="Case details" />
+      <Card>
+        <Meta icon="shield-outline" label="Risk level" value={getRiskLabel(caseItem.riskLevel)} colors={colors} />
+        <Meta icon="clock-outline" label="Last updated" value={formatDateTime(caseItem.updatedAt)} colors={colors} />
+      </Card>
+      {caseItem.status === 'OPEN' ? <Button
+          title="Delete case"
+          iconName="trash-can-outline"
+          variant="danger"
+          disabled={isMutating}
+          onPress={handleDelete}
+        /> : <Text style={[styles.reviewNotice, { color: colors.muted }]}>This case is under official review. Workflow status and record deletion are controlled by authorized staff.</Text>}
     </ScreenContainer>
   );
 }
 
+function Meta({ icon, label, value, colors }: {
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  label: string;
+  value: string;
+  colors: ReturnType<typeof useAppTheme>['colors'];
+}) {
+  return (
+    <View style={styles.meta}>
+      <MaterialCommunityIcons name={icon} size={16} color={colors.tint} />
+      <View>
+        <Text style={[styles.metaLabel, { color: colors.muted }]}>{label}</Text>
+        <Text style={[styles.metaValue, { color: colors.text }]}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  actions: {
-    gap: 8,
-    marginBottom: 10,
-  },
-  backButton: {
-    alignItems: 'center',
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: 'center',
-    marginBottom: 12,
-    width: 42,
-  },
-  badges: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  description: {
-    color: Colors.light.text,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  label: {
-    color: Colors.light.muted,
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: 10,
-    textTransform: 'uppercase',
-  },
-  section: {
-    marginBottom: 12,
-  },
-  timeline: {
-    gap: 12,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  timelineDate: {
-    color: Colors.light.muted,
-    fontSize: 12,
-    marginTop: 3,
-  },
-  timelineDetail: {
-    color: Colors.light.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 3,
-  },
-  timelineDot: {
-    backgroundColor: Colors.light.tint,
-    borderRadius: 6,
-    height: 12,
-    marginTop: 4,
-    width: 12,
-  },
-  timelineItem: {
-    backgroundColor: Colors.light.surface,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 12,
-  },
-  timelineTitle: {
-    color: Colors.light.text,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  value: {
-    color: Colors.light.text,
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 3,
-  },
+  actionError: { fontSize: 13, fontWeight: '700', marginTop: 6 },
+  backButton: { alignItems: 'center', borderRadius: 14, borderWidth: 1, height: 44, justifyContent: 'center', marginBottom: 20, width: 44 },
+  badges: { flexDirection: 'row', gap: 8, marginBottom: 18 },
+  description: { fontSize: 16, lineHeight: 24 },
+  eyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 },
+  meta: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 14 },
+  metaLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  metaLine: { flexDirection: 'row', gap: 28, marginTop: 20, paddingTop: 4 },
+  metaValue: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+  rail: { alignItems: 'center', width: 10 },
+  reviewNotice: { fontSize: 13, lineHeight: 20, marginTop: 12, textAlign: 'center' },
+  summary: { marginBottom: 12 },
+  timeline: { gap: 0 },
+  timelineContent: { borderRadius: 16, borderWidth: 1, flex: 1, marginBottom: 12, padding: 14 },
+  timelineDate: { fontSize: 11, marginTop: 7 },
+  timelineDetail: { fontSize: 13, lineHeight: 19, marginTop: 4 },
+  timelineDot: { borderRadius: 5, height: 10, width: 10 },
+  timelineItem: { flexDirection: 'row', gap: 12 },
+  timelineLine: { flex: 1, marginLeft: 4, marginTop: 5, width: 2 },
+  timelineTitle: { fontSize: 14, fontWeight: '700' },
+  title: { marginBottom: 8 },
 });

@@ -12,7 +12,7 @@ export class EvidenceController {
 
   addEvidence = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.evidenceService.addEvidence(req.params.id as string, req.body);
+      const data = await this.evidenceService.addEvidence(req.params.id as string, req.body, req.user!);
       sendSuccess(res, data, 'Evidence added successfully', 201);
     } catch (error) {
       next(error);

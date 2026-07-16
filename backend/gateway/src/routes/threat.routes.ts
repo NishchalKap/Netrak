@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ThreatController } from '../controllers/threat.controller';
+import { validateParams } from '../middleware/validate.middleware';
+import { idParamSchema } from '../dto/common.dto';
 
 const router = Router();
 const threatController = new ThreatController();
@@ -9,7 +11,7 @@ const threatController = new ThreatController();
  * /threats:
  *   get:
  *     summary: Get all threats
- *     description: Retrieves the complete list of active fraud threats and alerts seeded in the repository.
+ *     description: Retrieves advisory records configured in the deployment. Development may optionally load clearly identified reference guidance.
  *     tags: [Threats]
  *     security: []
  *     responses:
@@ -27,7 +29,7 @@ router.get('/', threatController.getThreats);
  * /threats/{id}:
  *   get:
  *     summary: Get threat by ID
- *     description: Retrieves detailed cyber fraud indicator metrics for a single threat record.
+ *     description: Retrieves indicators and descriptive metadata for a single configured advisory record.
  *     tags: [Threats]
  *     security: []
  *     parameters:
@@ -52,6 +54,6 @@ router.get('/', threatController.getThreats);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.get('/:id', threatController.getThreatById);
+router.get('/:id', validateParams(idParamSchema), threatController.getThreatById);
 
 export default router;

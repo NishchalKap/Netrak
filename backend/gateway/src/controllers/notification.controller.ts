@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { NotificationService } from '../services/notification.service';
 import { sendSuccess } from '../common/response';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 export class NotificationController {
   private notificationService: NotificationService;
@@ -9,7 +10,7 @@ export class NotificationController {
     this.notificationService = new NotificationService();
   }
 
-  createNotification = async (req: Request, res: Response, next: NextFunction) => {
+  createNotification = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const data = await this.notificationService.createNotification(req.body);
       sendSuccess(res, data, 'Notification created successfully', 201);
@@ -18,9 +19,9 @@ export class NotificationController {
     }
   };
 
-  getNotifications = async (req: Request, res: Response, next: NextFunction) => {
+  getNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.notificationService.getAllNotifications();
+      const data = await this.notificationService.getAllNotifications(req.user!);
       sendSuccess(res, data, 'Notifications retrieved successfully');
     } catch (error) {
       next(error);

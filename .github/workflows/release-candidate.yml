@@ -1,0 +1,141 @@
+name: Release candidate quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main, feat/frontend-phase-1-redesign]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gateway:
+    name: Gateway security and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/gateway
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netrak_ci
+      JWT_SECRET: ci-only-secret-with-at-least-thirty-two-characters
+      JWT_ISSUER: netrak-gateway
+      JWT_AUDIENCE: netrak-clients
+      ALLOW_PRIVILEGED_REGISTRATION: true
+      RUN_DATABASE_TESTS: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: netrak_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d netrak_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/gateway/package-lock.json
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run prisma:validate
+      - run: npm run prisma:migrate:deploy
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
+
+  operations:
+    name: Operations web build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/operations
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/operations/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+      - uses: actions/upload-artifact@v7
+        with:
+          name: netrak-operations-web
+          path: apps/operations/dist
+          if-no-files-found: error
+
+  mobile:
+    name: Expo platform exports
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run export
+      - run: npm audit --omit=dev --audit-level=high
+      - uses: actions/upload-artifact@v7
+        with:
+          name: netrak-expo-export
+          path: apps/mobile/dist
+          if-no-files-found: error
+
+  container:
+    name: Gateway container
+    runs-on: ubuntu-latest
+    needs: gateway
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend/gateway
+          push: false
+          tags: netrak-gateway:rc
+
+  experimental-prototype:
+    name: Experimental speech prototype syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m compileall -q netrak_speech_intelligence/netrak_speech_intelligence
+
+  dependency-review:
+    name: Dependency change review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

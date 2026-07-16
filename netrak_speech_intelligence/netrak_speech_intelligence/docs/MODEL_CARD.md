@@ -1,5 +1,7 @@
 # Netrak Speech Intelligence - Model Card
 
+> Experimental documentation. This pipeline is not integrated into or certified for the Netrak v1.0 release. Reported third-party figures below are not Netrak validation results.
+
 ## Model Overview
 
 **Service:** Netrak Speech Intelligence Service

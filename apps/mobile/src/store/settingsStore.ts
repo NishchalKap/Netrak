@@ -1,23 +1,28 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppSettings } from '@/types';
+import { preferencesStorage } from '@/services/preferencesStorage';
 
 interface SettingsState extends AppSettings {
-  setLocationSharing: (enabled: boolean) => void;
-  setVoiceAlerts: (enabled: boolean) => void;
   setEmergencyContact: (value: string) => void;
-  setPreferredLanguage: (value: string) => void;
-  setCompactMode: (enabled: boolean) => void;
+  setReduceMotion: (enabled: boolean) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-  locationSharing: true,
-  voiceAlerts: true,
-  emergencyContact: '1930',
-  preferredLanguage: 'English',
-  compactMode: false,
-  setLocationSharing: (locationSharing) => set({ locationSharing }),
-  setVoiceAlerts: (voiceAlerts) => set({ voiceAlerts }),
-  setEmergencyContact: (emergencyContact) => set({ emergencyContact }),
-  setPreferredLanguage: (preferredLanguage) => set({ preferredLanguage }),
-  setCompactMode: (compactMode) => set({ compactMode }),
-}));
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      emergencyContact: '1930',
+      reduceMotion: false,
+      setEmergencyContact: (emergencyContact) => set({ emergencyContact }),
+      setReduceMotion: (reduceMotion) => set({ reduceMotion }),
+    }),
+    {
+      name: 'settings',
+      storage: createJSONStorage(() => preferencesStorage),
+      partialize: ({ emergencyContact, reduceMotion }) => ({
+        emergencyContact,
+        reduceMotion,
+      }),
+    }
+  )
+);

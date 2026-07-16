@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { env } from './env';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -11,20 +12,16 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api',
-        description: 'Local development gateway',
-      },
-      {
-        url: 'https://api.netrak.local/api',
-        description: 'Production-style staging gateway',
+        url: env.PUBLIC_API_URL ?? `http://localhost:${env.PORT}/api`,
+        description: env.PUBLIC_API_URL ? 'Configured gateway' : 'Local development gateway',
       },
     ],
     tags: [
       { name: 'Health', description: 'Service status and availability endpoints' },
-      { name: 'Auth', description: 'Authentication, registration, profile, and password reset endpoints' },
+      { name: 'Auth', description: 'Authentication, registration, profile, and reserved recovery integration endpoints' },
       { name: 'Cases', description: 'Case lifecycle and evidence management endpoints' },
       { name: 'Notifications', description: 'Notification delivery and management endpoints' },
-      { name: 'Threats', description: 'Public threat intelligence feed endpoints' },
+      { name: 'Threats', description: 'Deployment-configured advisory record endpoints' },
     ],
     components: {
       securitySchemes: {
@@ -53,7 +50,7 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             email: { type: 'string', format: 'email', example: 'citizen@netrak.local' },
-            password: { type: 'string', minLength: 6, example: 'password123' },
+            password: { type: 'string', minLength: 1, maxLength: 128, format: 'password', example: 'correct horse battery staple' },
           },
           required: ['email', 'password'],
         },
@@ -61,7 +58,7 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             email: { type: 'string', format: 'email', example: 'citizen@netrak.local' },
-            password: { type: 'string', minLength: 6, example: 'password123' },
+            password: { type: 'string', minLength: 12, maxLength: 128, format: 'password', example: 'correct horse battery staple' },
             role: { type: 'string', enum: ['CITIZEN', 'OFFICER', 'ADMIN'], default: 'CITIZEN', example: 'CITIZEN' },
           },
           required: ['email', 'password'],
@@ -69,9 +66,9 @@ const options: swaggerJsdoc.Options = {
         ProfileUpdateRequest: {
           type: 'object',
           properties: {
-            name: { type: 'string', example: 'Nishchal Kap' },
-            phone: { type: 'string', example: '+919999999999' },
-            district: { type: 'string', example: 'Mumbai' },
+            name: { type: 'string', nullable: true, example: 'Nishchal Kap' },
+            phone: { type: 'string', nullable: true, example: '+919999999999' },
+            district: { type: 'string', nullable: true, example: 'Mumbai' },
           },
         },
         RefreshTokenRequest: {
@@ -145,8 +142,8 @@ const options: swaggerJsdoc.Options = {
           properties: {
             title: { type: 'string', minLength: 3, example: 'Suspected digital arrest call' },
             description: { type: 'string', minLength: 10, example: 'Caller claimed to be from cyber police demanding a verification transfer.' },
-            category: { type: 'string', example: 'digital_arrest' },
-            riskLevel: { type: 'string', example: 'high' },
+            category: { type: 'string', enum: ['digital_arrest', 'upi_fraud', 'investment_scam', 'counterfeit_currency', 'loan_app', 'sim_swap', 'other'], example: 'digital_arrest' },
+            riskLevel: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], example: 'high' },
             location: { type: 'string', example: 'Mumbai' },
           },
           required: ['title', 'description'],
@@ -219,6 +216,7 @@ const options: swaggerJsdoc.Options = {
           properties: {
             status: { type: 'string', example: 'error' },
             message: { type: 'string', example: 'Unauthorized access' },
+            requestId: { type: 'string', example: '01HZX7QY4C8J7H2M3N4P5R6S7T' },
             errors: {
               type: 'array',
               items: {
@@ -231,13 +229,14 @@ const options: swaggerJsdoc.Options = {
               example: [],
             },
           },
-          required: ['status', 'message'],
+          required: ['status', 'message', 'requestId'],
         },
         ValidationError: {
           type: 'object',
           properties: {
             status: { type: 'string', example: 'error' },
             message: { type: 'string', example: 'Validation failed' },
+            requestId: { type: 'string', example: '01HZX7QY4C8J7H2M3N4P5R6S7T' },
             errors: {
               type: 'array',
               items: {
@@ -249,18 +248,7 @@ const options: swaggerJsdoc.Options = {
               },
             },
           },
-          required: ['status', 'message', 'errors'],
-        },
-        PaginatedResponse: {
-          type: 'object',
-          properties: {
-            items: { type: 'array', items: { type: 'object' } },
-            page: { type: 'integer', example: 1 },
-            limit: { type: 'integer', example: 10 },
-            total: { type: 'integer', example: 42 },
-            totalPages: { type: 'integer', example: 5 },
-          },
-          required: ['items', 'page', 'limit', 'total', 'totalPages'],
+          required: ['status', 'message', 'errors', 'requestId'],
         },
         AuthTokenData: {
           type: 'object',
@@ -276,13 +264,6 @@ const options: swaggerJsdoc.Options = {
             token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
           },
           required: ['token'],
-        },
-        ForgotPasswordData: {
-          type: 'object',
-          properties: {
-            queued: { type: 'boolean', example: true },
-          },
-          required: ['queued'],
         },
         AuthTokenResponse: {
           allOf: [
@@ -302,17 +283,6 @@ const options: swaggerJsdoc.Options = {
               type: 'object',
               properties: {
                 data: { $ref: '#/components/schemas/RefreshTokenData' },
-              },
-            },
-          ],
-        },
-        ForgotPasswordResponse: {
-          allOf: [
-            { $ref: '#/components/schemas/ApiResponse' },
-            {
-              type: 'object',
-              properties: {
-                data: { $ref: '#/components/schemas/ForgotPasswordData' },
               },
             },
           ],

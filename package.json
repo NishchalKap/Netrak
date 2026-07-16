@@ -5,10 +5,19 @@
   "description": "Netrak public safety platform",
   "scripts": {
     "install:gateway": "npm install --prefix backend/gateway",
+    "install:operations": "npm install --prefix apps/operations",
+    "install:mobile": "npm install --prefix apps/mobile",
+    "install:all": "npm run install:gateway && npm run install:operations && npm run install:mobile",
     "prisma:generate": "cd backend/gateway && npx prisma generate",
-    "lint": "npm run lint --prefix backend/gateway",
-    "typecheck": "npm run typecheck --prefix backend/gateway",
-    "build": "npm run build --prefix backend/gateway",
+    "prisma:validate": "npm run prisma:validate --prefix backend/gateway",
+    "prisma:migrate:deploy": "npm run prisma:migrate:deploy --prefix backend/gateway",
+    "test": "npm run test --prefix backend/gateway && npm run test --prefix apps/operations",
+    "prototype:syntax": "python -m compileall -q netrak_speech_intelligence/netrak_speech_intelligence",
+    "lint": "npm run lint --prefix backend/gateway && npm run lint --prefix apps/operations && npm run lint --prefix apps/mobile",
+    "typecheck": "npm run typecheck --prefix backend/gateway && npm run typecheck --prefix apps/operations && npm run typecheck --prefix apps/mobile",
+    "build": "npm run build --prefix backend/gateway && npm run build --prefix apps/operations",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run prisma:validate && npm run prototype:syntax && npm run build",
+    "dev:operations": "npm run dev --prefix apps/operations",
     "dev": "npm run dev --prefix backend/gateway",
     "start": "npm run start --prefix backend/gateway"
   }

@@ -1,5 +1,7 @@
 # Architecture Summary
 
+> Status: product-direction document. AI scoring, counterfeit verification, graph intelligence and geospatial prediction are future architecture, not active v1.0 capabilities. See `docs/release-scope.md` for implemented release behavior.
+
 ## Product direction
 
 Netrak should be built as a layered platform with:

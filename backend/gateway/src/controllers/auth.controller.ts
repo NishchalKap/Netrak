@@ -40,7 +40,7 @@ export class AuthController {
 
   profile = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.authService.getProfile(req.user.id);
+      const data = await this.authService.getProfile(req.user!.id);
       sendSuccess(res, data, 'Profile retrieved successfully');
     } catch (error) {
       next(error);
@@ -49,7 +49,7 @@ export class AuthController {
 
   updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.authService.updateProfile(req.user.id, req.body);
+      const data = await this.authService.updateProfile(req.user!.id, req.body);
       sendSuccess(res, data, 'Profile updated successfully');
     } catch (error) {
       next(error);
@@ -58,8 +58,8 @@ export class AuthController {
 
   forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await this.authService.forgotPassword(req.body.email);
-      sendSuccess(res, data, 'Reset link queued');
+      await this.authService.forgotPassword(req.body.email);
+      res.status(503).end();
     } catch (error) {
       next(error);
     }

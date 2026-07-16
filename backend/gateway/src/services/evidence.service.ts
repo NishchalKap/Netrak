@@ -2,6 +2,7 @@ import { EvidenceRepository } from '../repositories/evidence.repository';
 import { CaseRepository } from '../repositories/case.repository';
 import { CreateEvidenceDto } from '../dto/evidence.dto';
 import { AppError } from '../common/AppError';
+import { AuthenticatedUser } from '../middleware/auth.middleware';
 
 export class EvidenceService {
   private evidenceRepository: EvidenceRepository;
@@ -12,9 +13,10 @@ export class EvidenceService {
     this.caseRepository = new CaseRepository();
   }
 
-  async addEvidence(caseId: string, data: CreateEvidenceDto) {
+  async addEvidence(caseId: string, data: CreateEvidenceDto, actor: AuthenticatedUser) {
     const caseItem = await this.caseRepository.findById(caseId);
     if (!caseItem) throw new AppError('Case not found', 404);
+    if (actor.role === 'CITIZEN' && caseItem.userId !== actor.id) throw new AppError('Case not found', 404);
     return this.evidenceRepository.create(caseId, data);
   }
 }

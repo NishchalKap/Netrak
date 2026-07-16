@@ -1,17 +1,26 @@
 import { prisma } from '../database/prisma';
+import { env } from '../config/env';
 
 export class CaseRepository {
-  async findAll() {
+  async findAll(userId?: string) {
     return prisma.case.findMany({
-      include: { evidence: true, timeline: true },
+      where: userId ? { userId } : undefined,
+      include: {
+        evidence: { orderBy: { createdAt: 'desc' } },
+        timeline: { orderBy: { createdAt: 'desc' } },
+      },
       orderBy: { createdAt: 'desc' },
+      take: env.MAX_LIST_RESULTS,
     });
   }
 
   async findById(id: string) {
     return prisma.case.findUnique({
       where: { id },
-      include: { evidence: true, timeline: true },
+      include: {
+        evidence: { orderBy: { createdAt: 'desc' } },
+        timeline: { orderBy: { createdAt: 'desc' } },
+      },
     });
   }
 
@@ -25,16 +34,37 @@ export class CaseRepository {
     userId: string;
   }) {
     return prisma.case.create({
-      data,
-      include: { evidence: true, timeline: true },
+      data: {
+        ...data,
+        timeline: {
+          create: {
+            title: 'Case created',
+            detail: 'The report was submitted to Netrak.',
+          },
+        },
+      },
+      include: {
+        evidence: { orderBy: { createdAt: 'desc' } },
+        timeline: { orderBy: { createdAt: 'desc' } },
+      },
     });
   }
 
-  async update(id: string, data: { title?: string; description?: string; status?: string }) {
-    return prisma.case.update({
-      where: { id },
-      data,
-      include: { evidence: true, timeline: true },
+  async update(
+    id: string,
+    data: { title?: string; description?: string; status?: string },
+    event: { title: string; detail: string }
+  ) {
+    return prisma.$transaction(async (transaction) => {
+      await transaction.case.update({ where: { id }, data });
+      await transaction.caseTimelineEvent.create({ data: { ...event, caseId: id } });
+      return transaction.case.findUniqueOrThrow({
+        where: { id },
+        include: {
+          evidence: { orderBy: { createdAt: 'desc' } },
+          timeline: { orderBy: { createdAt: 'desc' } },
+        },
+      });
     });
   }
 

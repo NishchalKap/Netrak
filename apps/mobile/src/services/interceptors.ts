@@ -1,41 +1,81 @@
+import { AxiosError, CanceledError, InternalAxiosRequestConfig, create } from 'axios';
 import { axiosInstance } from './axios';
-import * as SecureStore from 'expo-secure-store';
-import { useAuthStore } from '../store/authStore';
+import { API_URL, RETRY_ATTEMPTS, TIMEOUT } from './config';
+import { tokenStorage } from './tokenStorage';
+import { notifySessionExpired } from './sessionEvents';
 
-axiosInstance.interceptors.request.use(
-  async (config) => {
-    const token = await SecureStore.getItemAsync('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+interface RetryConfig extends InternalAxiosRequestConfig {
+  _authRetried?: boolean;
+  _retryCount?: number;
+}
+
+const refreshClient = create({ baseURL: API_URL, timeout: TIMEOUT, headers: { 'Content-Type': 'application/json' } });
+let refreshPromise: Promise<string | null> | null = null;
+
+axiosInstance.interceptors.request.use(async (config) => {
+  const token = await tokenStorage.get();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const request = error.config as RetryConfig | undefined;
+    if (!request) return Promise.reject(error);
+    if (error.code === 'ERR_CANCELED' || request.signal?.aborted) return Promise.reject(error);
 
-    if (error.response?.status === 401 && !originalRequest?._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !request._authRetried && !request.url?.includes('/auth/refresh')) {
+      request._authRetried = true;
       try {
-        const token = await SecureStore.getItemAsync('token');
-        const res = await axiosInstance.post('/auth/refresh', { token });
-        const nextToken = res?.data?.data?.token ?? res?.data?.token;
-
-        if (nextToken) {
-          await SecureStore.setItemAsync('token', nextToken);
-          originalRequest.headers.Authorization = `Bearer ${nextToken}`;
-          return axiosInstance(originalRequest);
-        }
-      } catch (e) {
-        useAuthStore.getState().logout();
-        return Promise.reject(e);
+        refreshPromise ??= refreshToken();
+        const token = await refreshPromise;
+        refreshPromise = null;
+        if (!token) throw error;
+        request.headers.Authorization = `Bearer ${token}`;
+        return axiosInstance(request);
+      } catch (refreshError) {
+        refreshPromise = null;
+        await tokenStorage.remove();
+        notifySessionExpired();
+        return Promise.reject(refreshError);
       }
+    }
+
+    const method = request.method?.toLowerCase() ?? 'get';
+    const retryableMethod = ['get', 'head', 'options', 'put'].includes(method);
+    const retryable = retryableMethod && (!error.response || error.response.status >= 500);
+    const retryCount = request._retryCount ?? 0;
+    if (retryable && retryCount < RETRY_ATTEMPTS) {
+      request._retryCount = retryCount + 1;
+      await delay(300 * 2 ** retryCount, request.signal);
+      return axiosInstance(request);
     }
 
     return Promise.reject(error);
   }
 );
+
+async function refreshToken() {
+  const token = await tokenStorage.get();
+  if (!token) return null;
+  const response = await refreshClient.post('/auth/refresh', { token });
+  const nextToken = response.data?.data?.token ?? response.data?.token ?? null;
+  if (nextToken) await tokenStorage.set(nextToken);
+  return nextToken;
+}
+
+function delay(ms: number, signal?: InternalAxiosRequestConfig['signal']) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(new CanceledError('Request cancelled'));
+    const onAbort = () => {
+      clearTimeout(timeout);
+      reject(new CanceledError('Request cancelled'));
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener?.('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener?.('abort', onAbort, { once: true });
+  });
+}

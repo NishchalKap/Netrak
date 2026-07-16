@@ -6,10 +6,15 @@ dist/
 build/
 .expo/
 web-build/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # Environment
 .env
-.env.local
+.env.*
+!.env.example
+!**/.env.example
 
 # Logs
 *.log

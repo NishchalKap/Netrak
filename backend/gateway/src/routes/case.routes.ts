@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { CaseController } from '../controllers/case.controller';
 import { EvidenceController } from '../controllers/evidence.controller';
-import { validate } from '../middleware/validate.middleware';
+import { validate, validateParams } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
 import { createCaseSchema, updateCaseSchema } from '../dto/case.dto';
 import { createEvidenceSchema } from '../dto/evidence.dto';
+import { idParamSchema } from '../dto/common.dto';
 
 const router = Router();
 const caseController = new CaseController();
@@ -16,8 +17,8 @@ router.use(authenticate);
  * @swagger
  * /cases:
  *   get:
- *     summary: Get all cases
- *     description: Retrieves a list of all cases reported in the system.
+ *     summary: Get accessible cases
+ *     description: Citizens receive only their own cases. Authorized officers and administrators receive the bounded operational case set.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -111,14 +112,14 @@ router.post('/', validate(createCaseSchema), caseController.createCase);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.get('/:id', caseController.getCaseById);
+router.get('/:id', validateParams(idParamSchema), caseController.getCaseById);
 
 /**
  * @swagger
  * /cases/{id}:
  *   patch:
  *     summary: Update case status or details
- *     description: Updates case details or transitions case status through its lifecycle.
+ *     description: Citizens may edit their own open case details but cannot change workflow status. Authorized officers and administrators may transition accessible cases.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -162,7 +163,7 @@ router.get('/:id', caseController.getCaseById);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
+router.patch('/:id', validateParams(idParamSchema), validate(updateCaseSchema), caseController.updateCase);
 
 /**
  * @swagger
@@ -201,14 +202,14 @@ router.patch('/:id', validate(updateCaseSchema), caseController.updateCase);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.delete('/:id', caseController.deleteCase);
+router.delete('/:id', validateParams(idParamSchema), caseController.deleteCase);
 
 /**
  * @swagger
  * /cases/{id}/evidence:
  *   post:
- *     summary: Upload case evidence metadata
- *     description: Associates uploaded files or references with a case ID.
+ *     summary: Attach case evidence metadata
+ *     description: Associates metadata or a reference value with an accessible case ID. This endpoint does not accept file binaries.
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
@@ -228,7 +229,7 @@ router.delete('/:id', caseController.deleteCase);
  *             $ref: '#/components/schemas/EvidenceCreateRequest'
  *     responses:
  *       201:
- *         description: Evidence uploaded and linked successfully
+ *         description: Evidence metadata linked successfully
  *         content:
  *           application/json:
  *             schema:
@@ -252,6 +253,6 @@ router.delete('/:id', caseController.deleteCase);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.post('/:id/evidence', validate(createEvidenceSchema), evidenceController.addEvidence);
+router.post('/:id/evidence', validateParams(idParamSchema), validate(createEvidenceSchema), evidenceController.addEvidence);
 
 export default router;

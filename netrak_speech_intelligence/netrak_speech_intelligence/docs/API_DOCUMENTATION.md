@@ -1,5 +1,7 @@
 # Netrak Speech Intelligence - API Documentation
 
+> Experimental standalone API contract. This service is unauthenticated, not connected to the Netrak gateway, and must not be exposed as a production or government-facing endpoint.
+
 ## Base URL
 
 ```
