@@ -71,13 +71,18 @@ const REFERENCE_ADVISORIES = [
 let seedPromise: Promise<void> | null = null;
 
 export class ThreatRepository {
-  async findAll() {
+  async findAll({ category, level, region, limit, offset }: { category?: string; level?: string; region?: string; limit?: number; offset?: number } = {}) {
     const count = await prisma.threat.count();
     if (count === 0 && env.LOAD_REFERENCE_ADVISORIES) {
       seedPromise ??= this.seed().finally(() => { seedPromise = null; });
       await seedPromise;
     }
-    return prisma.threat.findMany({ orderBy: { updatedAt: 'desc' }, take: env.MAX_LIST_RESULTS });
+    return prisma.threat.findMany({
+      where: { ...(category ? { category } : {}), ...(level ? { level } : {}), ...(region ? { region } : {}) },
+      orderBy: { updatedAt: 'desc' },
+      take: limit ?? env.MAX_LIST_RESULTS,
+      skip: offset,
+    });
   }
 
   async findById(id: string) {

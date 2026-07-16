@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { CaseController } from '../controllers/case.controller';
 import { EvidenceController } from '../controllers/evidence.controller';
-import { validate, validateParams } from '../middleware/validate.middleware';
+import { validate, validateParams, validateQuery } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
-import { createCaseSchema, updateCaseSchema } from '../dto/case.dto';
+import { caseListQuerySchema, createCaseSchema, updateCaseSchema } from '../dto/case.dto';
 import { createEvidenceSchema } from '../dto/evidence.dto';
 import { idParamSchema } from '../dto/common.dto';
 
@@ -22,6 +22,19 @@ router.use(authenticate);
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 500 }
+ *         description: Maximum number of records to return; omitted retains the deployment default.
+ *       - in: query
+ *         name: offset
+ *         schema: { type: integer, minimum: 0 }
+ *         description: Number of records to skip for offset pagination.
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [OPEN, IN_PROGRESS, CLOSED, ESCALATED] }
+ *         description: Optional workflow-status filter.
  *     responses:
  *       200:
  *         description: List of cases retrieved successfully
@@ -36,7 +49,7 @@ router.use(authenticate);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.get('/', caseController.getCases);
+router.get('/', validateQuery(caseListQuerySchema), caseController.getCases);
 
 /**
  * @swagger

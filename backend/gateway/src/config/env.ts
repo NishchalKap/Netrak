@@ -16,6 +16,10 @@ const envSchema = z.object({
   JWT_AUDIENCE: z.string().min(1).default('netrak-clients'),
   JWT_REFRESH_GRACE_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
   DATABASE_URL: z.string().min(1).default(DEVELOPMENT_DATABASE_URL),
+  DIRECT_URL: z.string().min(1).default(DEVELOPMENT_DATABASE_URL),
+  SUPABASE_URL: optionalUrl,
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().trim().min(3).max(63).regex(/^[a-z0-9][a-z0-9._-]*[a-z0-9]$/).optional(),
   CORS_ORIGINS: z.string().default('http://localhost:8081,http://localhost:4173'),
   MAX_LIST_RESULTS: z.coerce.number().int().min(50).max(1000).default(500),
   TRUST_PROXY: booleanString.default(false),
@@ -40,6 +44,8 @@ if (values.NODE_ENV === 'production') {
   if (values.JWT_SECRET === DEVELOPMENT_JWT_SECRET) productionErrors.push('JWT_SECRET must be explicitly configured');
   if (/replace|change|example|development|secret/i.test(values.JWT_SECRET)) productionErrors.push('JWT_SECRET must not contain a known placeholder value');
   if (values.DATABASE_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DATABASE_URL must be explicitly configured');
+  if (values.DIRECT_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DIRECT_URL must be explicitly configured');
+  if (values.SUPABASE_SERVICE_ROLE_KEY && !values.SUPABASE_URL) productionErrors.push('SUPABASE_URL is required when Supabase Storage credentials are configured');
   for (const suppliedOrigin of values.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)) {
     if (suppliedOrigin === '*') {
       productionErrors.push('CORS_ORIGINS cannot contain a wildcard');

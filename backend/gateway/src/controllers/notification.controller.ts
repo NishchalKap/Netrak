@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { NotificationService } from '../services/notification.service';
 import { sendSuccess } from '../common/response';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { NotificationListQueryDto } from '../dto/notification.dto';
 
 export class NotificationController {
   private notificationService: NotificationService;
@@ -21,7 +22,7 @@ export class NotificationController {
 
   getNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.notificationService.getAllNotifications(req.user!);
+      const data = await this.notificationService.getAllNotifications(req.user!, req.query as NotificationListQueryDto);
       sendSuccess(res, data, 'Notifications retrieved successfully');
     } catch (error) {
       next(error);

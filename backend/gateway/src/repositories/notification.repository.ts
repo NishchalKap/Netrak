@@ -2,11 +2,12 @@ import { prisma } from '../database/prisma';
 import { env } from '../config/env';
 
 export class NotificationRepository {
-  async findAll(userId?: string) {
+  async findAll({ userId, read, limit, offset }: { userId?: string; read?: boolean; limit?: number; offset?: number } = {}) {
     return prisma.notification.findMany({
-      where: userId ? { userId } : undefined,
+      where: { ...(userId ? { userId } : {}), ...(read === undefined ? {} : { read }) },
       orderBy: { createdAt: 'desc' },
-      take: env.MAX_LIST_RESULTS,
+      take: limit ?? env.MAX_LIST_RESULTS,
+      skip: offset,
     });
   }
 

@@ -22,3 +22,14 @@ export const validateParams = (schema: ZodSchema) => {
     }
   };
 };
+
+export const validateQuery = (schema: ZodSchema) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      req.query = await schema.parseAsync(req.query) as typeof req.query;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};

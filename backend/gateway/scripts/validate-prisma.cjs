@@ -3,7 +3,8 @@ const { spawnSync } = require('node:child_process');
 const prismaCli = require.resolve('prisma/build/index.js');
 const validationEnvironment = {
   ...process.env,
-  DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://mock:mock@localhost:5432/mockdb',
+  DIRECT_URL: process.env.DIRECT_URL || process.env.DATABASE_URL || 'postgresql://mock:mock@localhost:5432/mockdb',
 };
 
 const result = spawnSync(process.execPath, [prismaCli, 'validate'], {

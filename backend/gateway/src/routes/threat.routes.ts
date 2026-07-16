@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { ThreatController } from '../controllers/threat.controller';
-import { validateParams } from '../middleware/validate.middleware';
+import { validateParams, validateQuery } from '../middleware/validate.middleware';
 import { idParamSchema } from '../dto/common.dto';
+import { threatListQuerySchema } from '../dto/threat.dto';
 
 const router = Router();
 const threatController = new ThreatController();
@@ -14,6 +15,22 @@ const threatController = new ThreatController();
  *     description: Retrieves advisory records configured in the deployment. Development may optionally load clearly identified reference guidance.
  *     tags: [Threats]
  *     security: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 500 }
+ *       - in: query
+ *         name: offset
+ *         schema: { type: integer, minimum: 0 }
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *       - in: query
+ *         name: level
+ *         schema: { type: string }
+ *       - in: query
+ *         name: region
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: List of threats retrieved successfully
@@ -22,7 +39,7 @@ const threatController = new ThreatController();
  *             schema:
  *               $ref: '#/components/schemas/ThreatListResponse'
  */
-router.get('/', threatController.getThreats);
+router.get('/', validateQuery(threatListQuerySchema), threatController.getThreats);
 
 /**
  * @swagger

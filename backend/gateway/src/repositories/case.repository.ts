@@ -2,15 +2,16 @@ import { prisma } from '../database/prisma';
 import { env } from '../config/env';
 
 export class CaseRepository {
-  async findAll(userId?: string) {
+  async findAll({ userId, status, limit, offset }: { userId?: string; status?: string; limit?: number; offset?: number } = {}) {
     return prisma.case.findMany({
-      where: userId ? { userId } : undefined,
+      where: { ...(userId ? { userId } : {}), ...(status ? { status } : {}) },
       include: {
         evidence: { orderBy: { createdAt: 'desc' } },
         timeline: { orderBy: { createdAt: 'desc' } },
       },
       orderBy: { createdAt: 'desc' },
-      take: env.MAX_LIST_RESULTS,
+      take: limit ?? env.MAX_LIST_RESULTS,
+      skip: offset,
     });
   }
 

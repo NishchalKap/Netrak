@@ -14,5 +14,12 @@ export const updateCaseSchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'CLOSED', 'ESCALATED']).optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, { message: 'At least one field is required' });
 
+export const caseListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  offset: z.coerce.number().int().min(0).max(100_000).optional(),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'CLOSED', 'ESCALATED']).optional(),
+}).strict();
+
 export type CreateCaseDto = z.infer<typeof createCaseSchema>;
 export type UpdateCaseDto = z.infer<typeof updateCaseSchema>;
+export type CaseListQueryDto = z.infer<typeof caseListQuerySchema>;

@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { CaseService } from '../services/case.service';
 import { sendSuccess } from '../common/response';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { CaseListQueryDto } from '../dto/case.dto';
 
 export class CaseController {
   private caseService: CaseService;
@@ -21,7 +22,7 @@ export class CaseController {
 
   getCases = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.caseService.getAllCases(req.user!);
+      const data = await this.caseService.getAllCases(req.user!, req.query as CaseListQueryDto);
       sendSuccess(res, data, 'Cases retrieved successfully');
     } catch (error) {
       next(error);

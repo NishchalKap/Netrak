@@ -1,5 +1,6 @@
 import { ThreatRepository } from '../repositories/threat.repository';
 import { AppError } from '../common/AppError';
+import { ThreatListQueryDto } from '../dto/threat.dto';
 
 export class ThreatService {
   private threatRepository: ThreatRepository;
@@ -8,8 +9,8 @@ export class ThreatService {
     this.threatRepository = new ThreatRepository();
   }
 
-  async getAllThreats() {
-    return this.threatRepository.findAll();
+  async getAllThreats(query: ThreatListQueryDto) {
+    return this.threatRepository.findAll(query);
   }
 
   async getThreatById(id: string) {

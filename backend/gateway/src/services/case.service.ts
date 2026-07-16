@@ -1,5 +1,5 @@
 import { CaseRepository } from '../repositories/case.repository';
-import { CreateCaseDto, UpdateCaseDto } from '../dto/case.dto';
+import { CaseListQueryDto, CreateCaseDto, UpdateCaseDto } from '../dto/case.dto';
 import { AppError } from '../common/AppError';
 import { AuthenticatedUser } from '../middleware/auth.middleware';
 
@@ -10,8 +10,8 @@ export class CaseService {
     this.caseRepository = new CaseRepository();
   }
 
-  async getAllCases(actor: AuthenticatedUser) {
-    return this.caseRepository.findAll(actor.role === 'CITIZEN' ? actor.id : undefined);
+  async getAllCases(actor: AuthenticatedUser, query: CaseListQueryDto) {
+    return this.caseRepository.findAll({ ...query, userId: actor.role === 'CITIZEN' ? actor.id : undefined });
   }
 
   async getCaseById(id: string, actor: AuthenticatedUser) {

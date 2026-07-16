@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ThreatService } from '../services/threat.service';
 import { sendSuccess } from '../common/response';
+import { ThreatListQueryDto } from '../dto/threat.dto';
 
 export class ThreatController {
   private threatService: ThreatService;
@@ -11,7 +12,7 @@ export class ThreatController {
 
   getThreats = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await this.threatService.getAllThreats();
+      const data = await this.threatService.getAllThreats(req.query as ThreatListQueryDto);
       sendSuccess(res, data, 'Threats retrieved successfully');
     } catch (error) {
       next(error);

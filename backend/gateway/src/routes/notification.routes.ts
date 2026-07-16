@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { NotificationController } from '../controllers/notification.controller';
-import { validate } from '../middleware/validate.middleware';
+import { validate, validateQuery } from '../middleware/validate.middleware';
 import { authenticate, authorize } from '../middleware/auth.middleware';
-import { createNotificationSchema } from '../dto/notification.dto';
+import { createNotificationSchema, notificationListQuerySchema } from '../dto/notification.dto';
 
 const router = Router();
 const notificationController = new NotificationController();
@@ -18,6 +18,17 @@ router.use(authenticate);
  *     tags: [Notifications]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 500 }
+ *       - in: query
+ *         name: offset
+ *         schema: { type: integer, minimum: 0 }
+ *       - in: query
+ *         name: read
+ *         schema: { type: boolean }
+ *         description: Optional read-state filter.
  *     responses:
  *       200:
  *         description: List of notifications retrieved successfully
@@ -32,7 +43,7 @@ router.use(authenticate);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.get('/', notificationController.getNotifications);
+router.get('/', validateQuery(notificationListQuerySchema), notificationController.getNotifications);
 
 /**
  * @swagger
