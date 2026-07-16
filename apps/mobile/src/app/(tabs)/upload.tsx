@@ -2,9 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Image } from 'expo-image';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Typography } from '@/components/ui/Typography';
 import { Input } from '@/components/ui/Input';
@@ -53,47 +50,6 @@ export default function UploadFlowScreen() {
     [resolvedCaseId, cases]
   );
 
-  const applyPickedFile = (uri: string, name: string | null | undefined, pickedType: EvidenceType) => {
-    setType(pickedType);
-    setReference(uri);
-    if (!label.trim()) setLabel(name?.trim() || `${pickedType === 'image' ? 'Photo' : 'File'} evidence`);
-    setError(null);
-  };
-
-  const captureWithCamera = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      setError('Camera access is required to capture evidence. You can enable it in device settings.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.85 });
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      applyPickedFile(asset.uri, asset.fileName, asset.type === 'video' ? 'video' : 'image');
-    }
-  };
-
-  const chooseFromGallery = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError('Photo library access is required to select evidence. You can enable it in device settings.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      applyPickedFile(asset.uri, asset.fileName, asset.type === 'video' ? 'video' : 'image');
-    }
-  };
-
-  const chooseDocument = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false });
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      applyPickedFile(asset.uri, asset.name, 'document');
-    }
-  };
-
   const submitEvidence = async () => {
     if (!selectedCase) return setError('Choose a case before attaching evidence.');
     if (label.trim().length < 3) return setError('Add a clear evidence label.');
@@ -109,13 +65,13 @@ export default function UploadFlowScreen() {
   };
 
   if (isLoading && !cases.length) {
-    return <ScreenContainer><Typography variant="h1">Add evidence</Typography><SkeletonList count={2} /></ScreenContainer>;
+    return <ScreenContainer><Typography variant="h1">Add evidence reference</Typography><SkeletonList count={2} /></ScreenContainer>;
   }
 
   if (!cases.length) {
     return (
       <ScreenContainer>
-        <Typography variant="h1">Add evidence</Typography>
+        <Typography variant="h1">Add evidence reference</Typography>
         <SyncStatus error={fetchError} onRetry={() => { void fetchCases(true); }} />
         <EmptyState
           iconName="folder-plus-outline"
@@ -130,8 +86,8 @@ export default function UploadFlowScreen() {
   return (
     <ScreenContainer scroll refreshing={isLoading} onRefresh={() => { void fetchCases(true); }}>
       <Text style={[styles.eyebrow, { color: colors.tint }]}>CASE SUPPORT</Text>
-      <Typography variant="h1">Add evidence</Typography>
-      <Text style={[styles.subtitle, { color: colors.muted }]}>References are attached to a case for review. Add only information that helps explain what happened.</Text>
+      <Typography variant="h1">Add evidence reference</Typography>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>Metadata references are attached to a case for review. Add only information that helps explain what happened.</Text>
       <SyncStatus
         error={fetchError}
         cached={source === 'cached'}
@@ -172,12 +128,13 @@ export default function UploadFlowScreen() {
         </View>
       </Card>
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Choose evidence</Text>
-        <Button title="Take a photo" iconName="camera-outline" variant="secondary" onPress={() => { void captureWithCamera(); }} />
-        <Button title="Choose from gallery" iconName="image-multiple-outline" variant="secondary" onPress={() => { void chooseFromGallery(); }} />
-        <Button title="Choose a document" iconName="file-document-outline" variant="secondary" onPress={() => { void chooseDocument(); }} />
-        {reference && type === 'image' && <Image source={{ uri: reference }} style={styles.preview} contentFit="cover" transition={180} accessibilityLabel="Selected evidence preview" />}
-        {reference && <Text style={[styles.reference, { color: colors.muted }]} numberOfLines={2}>Selected: {reference}</Text>}
+        <View style={styles.capabilityRow}>
+          <MaterialCommunityIcons name="information-outline" size={22} color={colors.tint} />
+          <View style={styles.capabilityCopy}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>File transfer is future scope</Text>
+            <Text style={[styles.capabilityText, { color: colors.muted }]}>The current gateway accepts evidence metadata, not file binaries. Record a filename, transaction ID, or approved HTTPS evidence-system link below. Device files are never presented as uploaded.</Text>
+          </View>
+        </View>
       </Card>
       <Card style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Evidence type</Text>
@@ -204,13 +161,16 @@ export default function UploadFlowScreen() {
         <Input label="Handling notes" value={notes} placeholder="Context, sender, time, or handling notes" multiline numberOfLines={4} textAlignVertical="top" onChangeText={setNotes} style={styles.notes} />
       </Card>
       {(error || mutationError) && <Text accessibilityRole="alert" style={[styles.error, { color: colors.danger }]}>{error || mutationError}</Text>}
-      <Button title="Attach evidence" iconName="paperclip" loading={isMutating} onPress={submitEvidence} />
+      <Button title="Attach reference" iconName="paperclip" loading={isMutating} onPress={submitEvidence} />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   caseCopy: { flex: 1 },
+  capabilityCopy: { flex: 1 },
+  capabilityRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 12 },
+  capabilityText: { fontSize: 13, lineHeight: 19 },
   caseList: { gap: 8 },
   caseOption: { alignItems: 'center', borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: 10, padding: 13 },
   caseStatus: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 4, textTransform: 'uppercase' },
@@ -221,8 +181,6 @@ const styles = StyleSheet.create({
   error: { fontSize: 13, fontWeight: '600', marginBottom: 4 },
   eyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 9 },
   notes: { minHeight: 96 },
-  preview: { borderRadius: 14, height: 180, marginTop: 10, width: '100%' },
-  reference: { fontSize: 12, lineHeight: 18, marginTop: 8 },
   section: { marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
   step: { alignItems: 'center', flex: 1, gap: 6 },

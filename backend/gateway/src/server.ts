@@ -6,6 +6,10 @@ import { prisma } from './database/prisma';
 const server = app.listen(env.PORT, () => {
   logger.info('Gateway started', { environment: env.NODE_ENV, port: env.PORT, apiDocs: env.API_DOCS_ENABLED });
 });
+server.requestTimeout = 30_000;
+server.headersTimeout = 15_000;
+server.keepAliveTimeout = 5_000;
+server.maxRequestsPerSocket = 1_000;
 
 let shuttingDown = false;
 async function shutdown(signal: string, exitCode = 0) {

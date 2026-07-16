@@ -1,6 +1,6 @@
 # AI Services
 
-This folder will contain the platform's AI-facing service modules.
+This folder documents future AI-facing service boundaries. No module in this directory is connected to the v1.0 gateway or user interfaces.
 
 ## Planned modules
 

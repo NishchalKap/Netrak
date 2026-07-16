@@ -75,12 +75,6 @@ export interface CreateCaseInput {
   riskLevel?: RiskLevel;
 }
 
-export interface UpdateCaseInput {
-  title?: string;
-  description?: string;
-  status?: CaseStatus;
-}
-
 export type ThreatLevel = 'advisory' | 'elevated' | 'high' | 'critical';
 
 export interface ThreatItem {
@@ -104,12 +98,6 @@ export interface Notification {
 }
 
 export interface AppSettings {
-  locationSharing: boolean;
-  voiceAlerts: boolean;
-  caseUpdateAlerts: boolean;
-  threatAlerts: boolean;
   emergencyContact: string;
-  preferredLanguage: string;
-  compactMode: boolean;
   reduceMotion: boolean;
 }

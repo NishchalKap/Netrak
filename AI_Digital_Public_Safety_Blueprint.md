@@ -1,4 +1,6 @@
 # Technology & Innovation Blueprint
+
+> Research and product-strategy material. It is not a statement of deployed Netrak v1.0 capabilities; see `docs/release-scope.md`.
 ## AI for Digital Public Safety: Defeating Counterfeiting, Fraud & Digital Arrest Scams
 
 **Prepared as:** R&D Technology Intelligence Report

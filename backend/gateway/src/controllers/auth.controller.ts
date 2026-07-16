@@ -58,8 +58,8 @@ export class AuthController {
 
   forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await this.authService.forgotPassword(req.body.email);
-      sendSuccess(res, data, 'Reset link queued');
+      await this.authService.forgotPassword(req.body.email);
+      res.status(503).end();
     } catch (error) {
       next(error);
     }

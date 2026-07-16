@@ -1,6 +1,8 @@
 # Netrak Speech Intelligence Service
 
-**Layer 1 of Netrak AI Services** - AI-powered speech analysis for scam detection and digital public safety.
+> Experimental standalone prototype — excluded from the Netrak v1.0 release candidate. It is not connected to the gateway, citizen app, or operations workspace and has not completed production security, model-validation, load, or deployment certification. Examples below describe an intended prototype interface, not a deployed government capability.
+
+**Experimental AI service prototype** — speech-analysis research for possible future scam-detection integration.
 
 ## Overview
 
@@ -45,7 +47,7 @@ STRUCTURED JSON RESPONSE
 ✅ **OpenAI Whisper** - Base multilingual model for speech-to-text
 ✅ **Voice Spoof Detection** - Hugging Face audio deepfake classifier
 ✅ **Explainable Risk Scoring** - Weighted, deterministic risk engine
-✅ **FastAPI** - Production-ready REST API
+✅ **FastAPI** - Prototype REST interface; production exposure is not approved
 ✅ **Databricks Apps** - Cloud-native deployment
 
 ## Technology Stack
@@ -248,11 +250,9 @@ The risk score is calculated using explainable weighted scoring:
 * `HIGH`: 0.60 - 0.79
 * `CRITICAL`: 0.80 - 1.00
 
-## Testing
+## Testing status
 
-```bash
-pytest tests/
-```
+No automated test suite is currently included in this directory. Only syntax compilation is part of the repository release audit; inference correctness and API behavior remain future validation work.
 
 ## Databricks Apps Deployment
 

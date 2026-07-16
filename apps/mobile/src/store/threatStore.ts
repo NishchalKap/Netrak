@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
 import { threatApi } from '@/services/threatApi';
-import { preferencesStorage } from '@/services/preferencesStorage';
 import { getApiErrorMessage } from '@/services/apiError';
 import { ThreatItem } from '@/types';
 
@@ -19,9 +17,7 @@ interface ThreatState {
 let activeRequest: Promise<ThreatItem[]> | null = null;
 const THREATS_TTL_MS = 60000;
 
-export const useThreatStore = create<ThreatState>()(
-  persist(
-    (set, get) => ({
+export const useThreatStore = create<ThreatState>((set, get) => ({
       threats: [],
       isLoading: false,
       error: null,
@@ -46,20 +42,13 @@ export const useThreatStore = create<ThreatState>()(
           .finally(() => { activeRequest = null; });
         return activeRequest;
       },
-    }),
-    {
-      name: 'threat-cache',
-      storage: createJSONStorage(() => preferencesStorage),
-      partialize: ({ threats, lastSyncedAt }) => ({ threats, lastSyncedAt, source: threats.length ? 'cached' : 'idle' }),
-    }
-  )
-);
+}));
 
 function normalizeThreat(threat: ThreatItem): ThreatItem {
   return {
     ...threat,
     indicators: Array.isArray(threat.indicators) ? threat.indicators : [],
-    updatedAt: threat.updatedAt ?? new Date().toISOString(),
+    updatedAt: threat.updatedAt,
   };
 }
 

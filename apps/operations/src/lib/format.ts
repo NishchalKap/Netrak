@@ -46,10 +46,12 @@ export function toGeoJson(cases: CaseRecord[]): GeoJsonFeatureCollection {
   const features = cases.flatMap((caseItem) => {
     const candidate = caseItem as CaseRecord & { coordinates?: [number, number] };
     if (!candidate.coordinates || candidate.coordinates.length !== 2) return [];
+    const [longitude, latitude] = candidate.coordinates;
+    if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || longitude < -180 || longitude > 180 || latitude < -90 || latitude > 90) return [];
     return [{
       type: 'Feature' as const,
       id: caseItem.id,
-      geometry: { type: 'Point' as const, coordinates: candidate.coordinates },
+      geometry: { type: 'Point' as const, coordinates: [longitude, latitude] as [number, number] },
       properties: { label: caseItem.title, category: caseItem.category ?? 'other', severity: inferRisk(caseItem), timestamp: caseItem.updatedAt },
     }];
   });
@@ -59,7 +61,7 @@ export function toGeoJson(cases: CaseRecord[]): GeoJsonFeatureCollection {
 export function safeReference(reference: string) {
   try {
     const url = new URL(reference);
-    return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null;
+    return url.protocol === 'https:' ? url.toString() : null;
   } catch {
     return null;
   }

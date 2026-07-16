@@ -20,21 +20,9 @@ export default function SettingsScreen() {
   const { colors, isDarkMode } = useAppTheme();
   const mode = useThemeStore((state) => state.mode);
   const setMode = useThemeStore((state) => state.setMode);
-  const locationSharing = useSettingsStore((state) => state.locationSharing);
-  const voiceAlerts = useSettingsStore((state) => state.voiceAlerts);
-  const caseUpdateAlerts = useSettingsStore((state) => state.caseUpdateAlerts);
-  const threatAlerts = useSettingsStore((state) => state.threatAlerts);
   const emergencyContact = useSettingsStore((state) => state.emergencyContact);
-  const preferredLanguage = useSettingsStore((state) => state.preferredLanguage);
-  const compactMode = useSettingsStore((state) => state.compactMode);
   const reduceMotion = useSettingsStore((state) => state.reduceMotion);
-  const setLocationSharing = useSettingsStore((state) => state.setLocationSharing);
-  const setVoiceAlerts = useSettingsStore((state) => state.setVoiceAlerts);
-  const setCaseUpdateAlerts = useSettingsStore((state) => state.setCaseUpdateAlerts);
-  const setThreatAlerts = useSettingsStore((state) => state.setThreatAlerts);
   const setEmergencyContact = useSettingsStore((state) => state.setEmergencyContact);
-  const setPreferredLanguage = useSettingsStore((state) => state.setPreferredLanguage);
-  const setCompactMode = useSettingsStore((state) => state.setCompactMode);
   const setReduceMotion = useSettingsStore((state) => state.setReduceMotion);
   const logout = useAuthStore((state) => state.logout);
   const [diagnostic, setDiagnostic] = useState<DiagnosticState>('idle');
@@ -72,7 +60,6 @@ export default function SettingsScreen() {
         <Text style={[styles.groupLabel, { color: colors.muted }]}>APPEARANCE</Text>
         <ToggleRow title="Follow device appearance" detail="Use your system light or dark setting" value={mode === 'system'} onChange={(enabled) => setMode(enabled ? 'system' : isDarkMode ? 'dark' : 'light')} colors={colors} />
         <ToggleRow title="Dark appearance" detail={mode === 'system' ? 'Controlled by device appearance' : 'Manual appearance override'} value={isDarkMode} onChange={(enabled) => setMode(enabled ? 'dark' : 'light')} colors={colors} />
-        <ToggleRow title="Compact case cards" detail="Show more reports on screen" value={compactMode} onChange={setCompactMode} colors={colors} />
       </Card>
 
       <Card style={styles.section}>
@@ -82,22 +69,14 @@ export default function SettingsScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.groupLabel, { color: colors.muted }]}>NOTIFICATIONS</Text>
-        <ToggleRow title="Case updates" detail="Status and evidence activity" value={caseUpdateAlerts} onChange={setCaseUpdateAlerts} colors={colors} />
-        <ToggleRow title="Threat advisories" detail="Important public-safety intelligence" value={threatAlerts} onChange={setThreatAlerts} colors={colors} />
-        <ToggleRow title="Voice alerts" detail="Play critical status alerts" value={voiceAlerts} onChange={setVoiceAlerts} colors={colors} />
-      </Card>
-
-      <Card style={styles.section}>
         <Text style={[styles.groupLabel, { color: colors.muted }]}>EMERGENCY</Text>
-        <ToggleRow title="Location sharing" detail="Use location on incident reports" value={locationSharing} onChange={setLocationSharing} colors={colors} />
-        <Input label="Emergency contact" value={emergencyContact} keyboardType="phone-pad" onChangeText={setEmergencyContact} />
+        <Input label="Emergency contact" value={emergencyContact} keyboardType="phone-pad" onChangeText={(value) => setEmergencyContact(value.replace(/[^+0-9]/g, '').slice(0, 16))} />
         <Button title="Open SOS" iconName="shield-alert-outline" variant="outline" onPress={() => router.push('/(tabs)/sos')} />
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.groupLabel, { color: colors.muted }]}>LANGUAGE</Text>
-        <Input label="Preferred language" value={preferredLanguage} onChangeText={setPreferredLanguage} />
+        <Text style={[styles.groupLabel, { color: colors.muted }]}>FUTURE SCOPE</Text>
+        <Text style={[styles.supportText, { color: colors.muted }]}>Notification delivery preferences, voice alerts, automatic location sharing, localization, and compact layouts require native or backend contracts that are not active in this release.</Text>
       </Card>
 
       <Card style={styles.section}>
@@ -120,7 +99,7 @@ export default function SettingsScreen() {
           iconName="information-outline"
           title="About Netrak"
           value={`Version ${version}`}
-          onPress={() => Alert.alert('Netrak', `AI-powered digital public safety intelligence platform.\n\nVersion ${version}`)}
+          onPress={() => Alert.alert('Netrak', `Digital public safety reporting and operations platform. AI inference services are separate experimental scope and are not connected to this release.\n\nVersion ${version}`)}
           colors={colors}
         />
       </Card>

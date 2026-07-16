@@ -40,6 +40,7 @@ export default function NotificationCenterScreen() {
       <Button title="Read all" iconName="check-all" variant="outline" disabled={unreadCount === 0} onPress={markAllRead} />
     </View>
     <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => { void fetchNotifications(true); }} />
+    <Text style={[styles.scopeNote, { color: colors.muted }]}>Read markers are stored on this device. The current gateway does not expose a notification read-state mutation.</Text>
   </>;
 
   return <ScreenContainer>
@@ -64,5 +65,6 @@ const styles = StyleSheet.create({
   backButton: { alignItems: 'center', borderRadius: 8, borderWidth: 1, height: 42, justifyContent: 'center', marginBottom: 12, width: 42 },
   header: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
   list: { paddingBottom: 16 },
+  scopeNote: { fontSize: 11, lineHeight: 17, marginBottom: 12 },
   subtitle: { fontSize: 14, fontWeight: '700', marginBottom: 12 },
 });

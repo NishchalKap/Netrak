@@ -1,6 +1,8 @@
 # Netrak
 
-Netrak is an AI-powered digital public-safety intelligence platform for citizens, law-enforcement teams, financial institutions, telecom operators, and government agencies.
+Netrak is a digital public-safety reporting and operational-intelligence platform for citizens, law-enforcement teams, financial institutions, telecom operators, and government agencies. The v1.0 release candidate does not present experimental AI services as deployed capabilities.
+
+See [Netrak v1.0 release scope](docs/release-scope.md) before making product or demonstration claims. It distinguishes tested capabilities, limited integrations, and future scope.
 
 ## Applications
 
@@ -32,6 +34,14 @@ npm run export --prefix apps/mobile
 
 Copy the relevant `.env.example` before starting services. Production deployments must supply a unique gateway JWT secret, PostgreSQL connection, and explicit HTTPS CORS origins. Never place secrets in `VITE_` or `EXPO_PUBLIC_` variables because those values are bundled into clients.
 
+Apply the committed database migration as a separate deployment step before starting a new gateway release:
+
+```bash
+npm run prisma:migrate:deploy
+```
+
+Do not run `prisma db push` against production. Back up the target database, review the SQL migration, apply it with the deployment identity, and verify `/api/health` before shifting traffic.
+
 ## Operational platform architecture
 
 The workspace uses React, TypeScript, Vite, React Router, TanStack Query, Axios, Lucide, and Recharts. It follows a feature-first boundary:
@@ -40,7 +50,7 @@ The workspace uses React, TypeScript, Vite, React Router, TanStack Query, Axios,
 - `src/components` — reusable primitives and operational UI patterns.
 - `src/data` — typed API repositories and query hooks.
 - `src/features` — authentication and global search workflows.
-- `src/lib` — API transport, formatting, GeoJSON conversion, and realtime abstractions.
+- `src/lib` — API transport, safe formatting, and GeoJSON capability boundaries while production views use transparent polling.
 - `src/pages` — route-level operational capabilities.
 
 See [operational-platform.md](docs/architecture/operational-platform.md) for API boundaries, component behavior, and future backend integration points.
@@ -52,4 +62,5 @@ See [operational-platform.md](docs/architecture/operational-platform.md) for API
 - [Frontend contract](docs/frontend-contract.md)
 - [Design system](docs/design/DESIGN.md)
 - [Release candidate runbook](docs/release-candidate.md)
+- [Release scope and capability truth](docs/release-scope.md)
 - [Security policy](SECURITY.md)

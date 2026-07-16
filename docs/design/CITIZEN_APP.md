@@ -1,5 +1,7 @@
 # Netrak Citizen App
 
+> Design direction document. The implemented v1.0 scope and integration limitations are defined in `docs/release-scope.md`.
+
 ## Experience promise
 
 The citizen experience answers “Am I safe?” before presenting technical detail. It should feel like a trusted financial product: private, direct, and composed.

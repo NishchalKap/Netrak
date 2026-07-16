@@ -58,7 +58,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"citizen@netrak.local\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"citizen@netrak.local\",\n  \"password\": \"correct horse battery staple\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -84,7 +84,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"officer@netrak.local\",\n  \"password\": \"password123\",\n  \"role\": \"OFFICER\"\n}"
+              "raw": "{\n  \"email\": \"citizen.new@netrak.local\",\n  \"password\": \"correct horse battery staple\",\n  \"role\": \"CITIZEN\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -187,7 +187,7 @@
           }
         },
         {
-          "name": "Forgot Password",
+          "name": "Password Reset Boundary (expects 503)",
           "request": {
             "method": "POST",
             "header": [

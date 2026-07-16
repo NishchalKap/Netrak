@@ -31,12 +31,26 @@ export const useAuthStore = create<AuthState>((set) => ({
   hydrate: async () => {
     try {
       const token = await tokenStorage.get();
-      const claims = token ? decodeJwt(token) as { exp?: number } | null : null;
-      if (token && claims?.exp && claims.exp * 1000 <= Date.now()) {
-        await tokenStorage.remove();
+      const claims = token ? decodeJwt(token) as { exp?: number; id?: string; sub?: string; role?: string } | null : null;
+      const structurallyValid = Boolean(token && claims && typeof claims.exp === 'number' && typeof claims.id === 'string' && claims.sub === claims.id && claims.role === 'CITIZEN');
+      if (!structurallyValid) {
+        if (token) await tokenStorage.remove();
         clearSessionData();
-        set({ isHydrated: true, isAuthenticated: false, token: null, error: 'Your session expired. Please sign in again.' });
+        set({ isHydrated: true, isAuthenticated: false, token: null, error: token ? 'Your session is invalid. Please sign in again.' : null });
         return;
+      }
+      if (claims!.exp! * 1000 <= Date.now()) {
+        try {
+          const refreshed = await authApi.refresh(token!);
+          await tokenStorage.set(refreshed.token);
+          set({ isHydrated: true, isAuthenticated: true, token: refreshed.token, error: null });
+          return;
+        } catch {
+          await tokenStorage.remove();
+          clearSessionData();
+          set({ isHydrated: true, isAuthenticated: false, token: null, error: 'Your session expired. Please sign in again.' });
+          return;
+        }
       }
       set({ isHydrated: true, isAuthenticated: Boolean(token), token });
     } catch {
@@ -47,6 +61,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authApi.login(data);
+      if (response.user.role !== 'CITIZEN') {
+        throw new Error('Officer and administrator accounts must use the Netrak Operations workspace.');
+      }
       await tokenStorage.set(response.token);
       useUserStore.getState().setProfile(response.user);
       set({ isAuthenticated: true, token: response.token, isLoading: false });
@@ -61,6 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authApi.register(data);
+      if (response.user.role !== 'CITIZEN') throw new Error('Unexpected account role');
       await tokenStorage.set(response.token);
       useUserStore.getState().setProfile(response.user);
       set({ isAuthenticated: true, token: response.token, isLoading: false });

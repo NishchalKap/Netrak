@@ -1,5 +1,7 @@
 # Market Intelligence Report: AI for Digital Public Safety, Fraud Prevention & Counterfeit Detection
 
+> Market research, not an implementation or product-availability claim. See `docs/release-scope.md` for current Netrak behavior.
+
 **Prepared by:** Principal Technology Consultant (Deloitte-style engagement format) with Cyber Threat Intelligence input
 **Scope window:** July 2025 – July 2026 (evidence restricted to the trailing 12 months except where a cited fact is foundational/historical)
 **Date:** July 6, 2026

@@ -11,3 +11,14 @@ export const validate = (schema: ZodSchema) => {
     }
   };
 };
+
+export const validateParams = (schema: ZodSchema) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      req.params = await schema.parseAsync(req.params) as typeof req.params;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};

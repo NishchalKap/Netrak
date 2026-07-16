@@ -1,4 +1,6 @@
 # AI-Powered Digital Public Safety Intelligence Platform
+
+> Target architecture, not the current deployment topology. The implemented v1.0 scope is defined in `docs/release-scope.md`.
 ## Production-Grade System Architecture
 
 **Prepared as:** Enterprise Architecture Design Review

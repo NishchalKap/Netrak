@@ -88,18 +88,11 @@ export interface ApiError {
   status: 'error';
   message: string;
   errors?: ApiErrorDetail[];
+  requestId?: string;
 }
 
 export interface ValidationError extends ApiError {
   errors: ApiErrorDetail[];
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
 }
 
 export interface LoginRequest {
@@ -118,9 +111,9 @@ export interface RefreshRequest {
 }
 
 export interface ProfileUpdateRequest {
-  name?: string;
-  phone?: string;
-  district?: string;
+  name?: string | null;
+  phone?: string | null;
+  district?: string | null;
 }
 
 export interface ForgotPasswordRequest {
@@ -162,10 +155,6 @@ export interface RefreshTokenData {
   token: string;
 }
 
-export interface ForgotPasswordData {
-  queued: boolean;
-}
-
 export type LoginResponse = ApiResponse<AuthTokenData>;
 
 export type RegisterResponse = ApiResponse<AuthTokenData>;
@@ -175,8 +164,6 @@ export type RefreshResponse = ApiResponse<RefreshTokenData>;
 export type GetProfileResponse = ApiResponse<User>;
 
 export type ProfileUpdateResponse = ApiResponse<User>;
-
-export type ForgotPasswordResponse = ApiResponse<ForgotPasswordData>;
 
 export type GetCasesResponse = ApiResponse<Case[]>;
 

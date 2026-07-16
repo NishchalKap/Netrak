@@ -38,7 +38,7 @@ router.get('/', async (_req, res) => {
       data: { status: 'UP', database: 'UP' },
     });
   } catch (error) {
-    logger.warn('Readiness check failed', { message: error instanceof Error ? error.message : 'Unknown database error' });
+    logger.warn('Readiness check failed', { errorType: error instanceof Error ? error.name : 'UnknownDatabaseError' });
     res.status(503).json({
       status: 'error',
       message: 'Service is not ready',

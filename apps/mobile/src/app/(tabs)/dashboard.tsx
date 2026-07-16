@@ -36,6 +36,13 @@ export default function DashboardScreen() {
     unread: notifications.filter((item) => !item.read).length,
   }), [cases, notifications]);
   const firstName = profile?.name?.split(' ')[0] || 'there';
+  const serviceState = source === 'online'
+    ? { label: 'CONNECTED', title: 'Ready', detail: 'Your case records are synchronized.', color: colors.success }
+    : source === 'cached'
+      ? { label: 'CACHED', title: 'Offline view', detail: 'Showing the most recent records stored on this device.', color: colors.warning }
+      : error
+        ? { label: 'UNAVAILABLE', title: 'Connection needed', detail: 'Some services could not be refreshed.', color: colors.danger }
+        : { label: 'CHECKING', title: 'Connecting', detail: 'Checking Netrak service availability.', color: colors.muted };
 
   return (
     <ScreenContainer scroll refreshing={(isLoading || notificationsLoading) && (cases.length > 0 || notifications.length > 0)} onRefresh={() => { fetchCases(true); fetchNotifications(true); }} contentContainerStyle={styles.scroll}>
@@ -43,7 +50,7 @@ export default function DashboardScreen() {
         <View>
           <Text style={[styles.eyebrow, { color: colors.tint }]}>NETRAK / {profile?.role ?? 'CITIZEN'}</Text>
           <Typography variant="h1" style={styles.greeting}>Good morning, {firstName}.</Typography>
-          <Text style={[styles.subhead, { color: colors.muted }]}>Your digital safety, quietly protected.</Text>
+          <Text style={[styles.subhead, { color: colors.muted }]}>Clear reporting and recovery support.</Text>
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Open notifications" style={[styles.bell, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => router.push('/(tabs)/notifications')}>
           <MaterialCommunityIcons name="bell-outline" size={20} color={colors.text} />
@@ -54,10 +61,10 @@ export default function DashboardScreen() {
       <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => fetchCases(true)} />
 
       <Card style={[styles.threatCard, { backgroundColor: colors.surface, borderColor: `${colors.tint}38` }]}>
-        <View style={styles.cardTopline}><Text style={[styles.label, { color: colors.muted }]}>YOUR PROTECTION STATUS</Text><View style={styles.secure}><View style={[styles.secureDot, { backgroundColor: colors.success }]} /><Text style={[styles.secureText, { color: colors.success }]}>MONITORED</Text></View></View>
+        <View style={styles.cardTopline}><Text style={[styles.label, { color: colors.muted }]}>NETRAK SERVICE STATUS</Text><View style={styles.secure}><View style={[styles.secureDot, { backgroundColor: serviceState.color }]} /><Text style={[styles.secureText, { color: serviceState.color }]}>{serviceState.label}</Text></View></View>
         <View style={styles.threatBody}>
-          <View><Text style={[styles.threatNumber, { color: colors.text }]}>Protected</Text><Text style={[styles.threatText, { color: colors.muted }]}>No immediate action is needed.</Text></View>
-          <View style={[styles.ring, { backgroundColor: `${colors.tint}14`, borderColor: `${colors.tint}4D` }]}><MaterialCommunityIcons name="shield-check-outline" size={31} color={colors.tint} /></View>
+          <View><Text style={[styles.threatNumber, { color: colors.text }]}>{serviceState.title}</Text><Text style={[styles.threatText, { color: colors.muted }]}>{serviceState.detail}</Text></View>
+          <View style={[styles.ring, { backgroundColor: `${serviceState.color}14`, borderColor: `${serviceState.color}4D` }]}><MaterialCommunityIcons name="shield-check-outline" size={31} color={serviceState.color} /></View>
         </View>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <Text style={[styles.advisory, { color: colors.muted }]}><Text style={[styles.advisoryStrong, { color: colors.text }]}>Security advisory · </Text>Never share an OTP or transfer money to verify your identity.</Text>
@@ -84,7 +91,7 @@ export default function DashboardScreen() {
 
       <Card style={styles.evidenceCard}>
         <View style={[styles.evidenceIcon, { backgroundColor: colors.surfaceMuted }]}><MaterialCommunityIcons name="cloud-upload-outline" size={22} color={colors.tint} /></View>
-        <View style={styles.evidenceCopy}><Text style={[styles.evidenceTitle, { color: colors.text }]}>Keep evidence ready</Text><Text style={[styles.evidenceText, { color: colors.muted }]}>Add screenshots, recordings, or transaction details to an open case.</Text></View>
+        <View style={styles.evidenceCopy}><Text style={[styles.evidenceTitle, { color: colors.text }]}>Keep evidence references ready</Text><Text style={[styles.evidenceText, { color: colors.muted }]}>Record secure links, filenames, transaction IDs, or handling notes on an open case.</Text></View>
         <Pressable accessibilityRole="button" accessibilityLabel="Add evidence" onPress={() => router.push('/(tabs)/upload')}><MaterialCommunityIcons name="arrow-top-right" size={21} color={colors.text} /></Pressable>
       </Card>
     </ScreenContainer>

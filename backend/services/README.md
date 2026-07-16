@@ -1,8 +1,8 @@
 # Backend Services
 
-This folder will hold the initial API and service boundary implementations for the platform.
+This directory is a future service-boundary placeholder and contains no runtime implementation. The canonical v1.0 backend is `backend/gateway`.
 
-## Planned modules
+## Future scope
 
 - auth service
 - case management service

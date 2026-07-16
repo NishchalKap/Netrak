@@ -12,6 +12,7 @@ export const sendError = (res: Response, message = 'Error', statusCode = 500, er
   return res.status(statusCode).json({
     status: 'error',
     message,
-    errors
+    ...(errors === undefined ? {} : { errors }),
+    requestId: String(res.locals.requestId ?? res.getHeader('X-Request-Id') ?? 'unknown'),
   });
 };

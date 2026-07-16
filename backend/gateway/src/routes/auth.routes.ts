@@ -42,7 +42,7 @@ router.post('/login', validate(loginSchema), authController.login);
  * /auth/register:
  *   post:
  *     summary: Register a new account
- *     description: Registers a new user with a specific role.
+ *     description: Self-registers a citizen account. Officer and administrator roles require deployment-controlled provisioning unless the explicit development override is enabled.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -59,7 +59,7 @@ router.post('/login', validate(loginSchema), authController.login);
  *             schema:
  *               $ref: '#/components/schemas/AuthTokenResponse'
  *       400:
- *         description: Email already exists or validation failed
+ *         description: Account could not be created or validation failed
  *         content:
  *           application/json:
  *             schema:
@@ -72,7 +72,7 @@ router.post('/register', validate(registerSchema), authController.register);
  * /auth/refresh:
  *   post:
  *     summary: Refresh JWT token
- *     description: Generates a new short-lived JWT authentication token using an existing token.
+ *     description: Generates a new short-lived JWT using a valid token or one within the configured post-expiry refresh grace period.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -157,8 +157,8 @@ router.patch('/profile', authenticate, validate(updateProfileSchema), authContro
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Trigger password reset link
- *     description: Queues a password reset workflow without revealing whether an account exists.
+ *     summary: Password reset integration boundary
+ *     description: Reserved integration boundary for deployment-owned password reset delivery. Returns 503 until a delivery provider is configured.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -168,12 +168,12 @@ router.patch('/profile', authenticate, validate(updateProfileSchema), authContro
  *           schema:
  *             $ref: '#/components/schemas/ForgotPasswordRequest'
  *     responses:
- *       200:
- *         description: Reset request queued successfully
+ *       503:
+ *         description: Password reset delivery is not configured
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ForgotPasswordResponse'
+ *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 

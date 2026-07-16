@@ -1,5 +1,7 @@
 # Netrak Design System
 
+> Design reference, not a release capability checklist. See `docs/release-scope.md` for implemented v1.0 behavior.
+
 ## Purpose
 
 Netrak is digital public-safety intelligence. The interface must lower anxiety, establish institutional trust, and make consequential work feel clear. It is not a cybersecurity spectacle.

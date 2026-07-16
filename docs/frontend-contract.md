@@ -1,5 +1,7 @@
 # Netrak Frontend Integration Contract
 
+> Release note: this document describes gateway contracts, not every deployed product capability. `docs/release-scope.md` is authoritative for demonstration status and future scope.
+
 This contract is the handoff document for frontend engineering tools (including Lovable). It describes the gateway endpoints, auth flow, payload contracts, error handling, and the expected integration patterns for the Netrak application.
 
 ## 1. Project Overview
@@ -60,7 +62,7 @@ If a protected request returns `401`, call `POST /auth/refresh` with the current
 - `POST /auth/login`
 - `POST /auth/register`
 - `POST /auth/refresh`
-- `POST /auth/forgot-password`
+- `POST /auth/forgot-password` — reserved boundary; returns `503` until deployment-owned delivery is integrated
 - `GET /health`
 - `GET /api/health`
 - `GET /threats`
@@ -85,14 +87,14 @@ If a protected request returns `401`, call `POST /auth/refresh` with the current
 |----------|-------|
 | Algorithm | HS256 |
 | Expiry | 1 hour |
-| Payload | `{ id: string, role: string }` |
+| Payload | `{ id: string, sub: string, role: string, jti: string }` |
 | Header | `Authorization: Bearer <token>` |
 
-The JWT is stateless. The gateway does not maintain a server-side session store. Store the token securely on the client (e.g. secure storage on mobile, httpOnly cookie or secure local storage on web).
+The JWT is self-contained and the gateway does not maintain a durable session store. A bounded in-process fingerprint cache rejects reuse of a token at the refresh endpoint. Native clients use secure device storage; the supplied web applications use session storage so tokens are cleared with the browser session.
 
 ## 5. Refresh Token
 
-The gateway uses a single-token refresh model (not a separate refresh/access token pair).
+The gateway uses a single-token refresh model (not a separate refresh/access token pair). A correctly signed token may be renewed once during the configured, bounded post-expiry grace period; reuse at the same gateway process is rejected. After that period the user must sign in again. Multi-replica deployments require an approved shared replay/rate-limit layer or a single active gateway replica.
 
 **Request:**
 
@@ -128,7 +130,7 @@ Content-Type: application/json
 
 | Role | Description |
 |------|-------------|
-| `CITIZEN` | Report incidents, create cases, view threats |
+| `CITIZEN` | Report incidents, manage their own open case details, attach evidence references, and view advisories |
 | `OFFICER` | Manage cases and update status |
 | `ADMIN` | Platform-level operations |
 
@@ -156,6 +158,7 @@ Every error response uses:
 {
   "status": "error",
   "message": "Human readable error",
+  "requestId": "request-correlation-id",
   "errors": []
 }
 ```
@@ -179,27 +182,15 @@ Read errors from `error.response.data` when using Axios.
 
 ## 9. Pagination
 
-Pagination is not yet implemented for list endpoints. Clients should treat `GET /cases`, `GET /notifications`, and `GET /threats` as full-list responses.
-
-The `PaginatedResponse` type in `shared/types/api.ts` is reserved for future use:
-
-```json
-{
-  "items": [],
-  "page": 1,
-  "limit": 10,
-  "total": 42,
-  "totalPages": 5
-}
-```
+Pagination is not yet implemented for list endpoints. The gateway caps `GET /cases`, `GET /notifications`, and `GET /threats` using `MAX_LIST_RESULTS` to prevent unbounded responses. Clients must not assume that these arrays represent records beyond the configured release limit.
 
 ## 10. Date Format
 
 All timestamps are ISO 8601 UTC strings, e.g. `2026-07-10T10:00:00.000Z`.
 
-## 11. Upload Specification
+## 11. Evidence Reference Specification
 
-Evidence is metadata-first. Files are referenced by URI/path; the gateway stores metadata via `POST /cases/:id/evidence`.
+Evidence is metadata-only in v1.0. Files are not transferred to the gateway; approved HTTPS evidence-system links, filenames, transaction IDs, or other reference values are stored via `POST /cases/:id/evidence`.
 
 ### Image
 
@@ -245,7 +236,18 @@ Allowed `type` values: `audio`, `image`, `video`, `document`, `chat`, `link`, `n
 | `PORT` | `3000` | Gateway listen port |
 | `NODE_ENV` | `development` | Runtime environment |
 | `JWT_SECRET` | (dev default) | JWT signing secret |
+| `JWT_ISSUER` | `netrak-gateway` | Expected token issuer |
+| `JWT_AUDIENCE` | `netrak-clients` | Expected token audience |
+| `JWT_REFRESH_GRACE_SECONDS` | `900` | Maximum post-expiry refresh window |
 | `DATABASE_URL` | (dev default) | PostgreSQL connection string |
+| `CORS_ORIGINS` | local citizen and operations origins | Comma-separated browser origins; wildcard is rejected in production |
+| `MAX_LIST_RESULTS` | `500` | Maximum records returned by current non-paginated list endpoints |
+| `TRUST_PROXY` | `false` | Trust reverse-proxy forwarding headers |
+| `API_DOCS_ENABLED` | enabled outside production | Swagger exposure toggle |
+| `PUBLIC_API_URL` | unset | Public API URL used in generated documentation |
+| `ALLOW_PRIVILEGED_REGISTRATION` | `false` | Development-only managed-role registration switch |
+| `ALLOW_LEGACY_PASSWORD_MIGRATION` | `false` | One-time plaintext legacy migration switch; rejected in production |
+| `LOAD_REFERENCE_ADVISORIES` | enabled outside production | Generic development guidance; production defaults to deployment records only |
 
 ### Frontend
 
@@ -254,6 +256,10 @@ Allowed `type` values: `audio`, `image`, `video`, `document`, `chat`, `link`, `n
 | `EXPO_PUBLIC_API_URL` | `http://localhost:3000/api` | API base URL |
 | `EXPO_PUBLIC_API_TIMEOUT` | `10000` | Request timeout (ms) |
 | `EXPO_PUBLIC_API_RETRY_ATTEMPTS` | `2` | Max retry count for transient failures |
+| `VITE_API_URL` | `http://localhost:3000/api` | Operations API base URL |
+| `VITE_API_TIMEOUT` | `10000` | Operations request timeout (ms) |
+| `VITE_API_RETRY_ATTEMPTS` | `2` | Operations retry limit for idempotent requests |
+| `VITE_POLL_INTERVAL` | `60000` | Operations polling interval (ms); no realtime stream is implied |
 
 ## 13. Required Headers
 
@@ -272,7 +278,10 @@ Allowed `type` values: `audio`, `image`, `video`, `document`, `chat`, `link`, `n
 | `401` | Invalid or expired token |
 | `403` | Forbidden (insufficient role) |
 | `404` | Entity not found |
+| `409` | Request conflicts with current workflow state |
+| `429` | Rate limit exceeded |
 | `500` | Unexpected server failure |
+| `503` | Required deployment integration or dependency unavailable |
 
 ## 15. Retry Policy
 
@@ -295,10 +304,10 @@ Production-quality Axios examples are in `docs/examples/`:
 
 - `client.ts` — shared client with retry and error normalization
 - `login.ts` — auth and token refresh
-- `profile.ts` — profile and password reset
-- `cases.ts` — case CRUD and evidence upload
+- `profile.ts` — profile read and update
+- `cases.ts` — case CRUD and evidence-reference metadata
 - `notifications.ts` — notification list and create
-- `threats.ts` — public threat feed
+- `threats.ts` — deployment-configured advisory feed
 
 ## 18. Postman Collection
 

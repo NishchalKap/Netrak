@@ -4,8 +4,7 @@ import type { AuthResponse, CaseRecord, CaseStatus, Evidence, EvidenceType, Heal
 export const authRepository = {
   login: (email: string, password: string) => api.post<AuthResponse, { email: string; password: string }>('/auth/login', { email, password }),
   profile: (signal?: AbortSignal) => api.get<User>('/auth/profile', { signal }),
-  updateProfile: (data: Pick<User, 'name' | 'phone' | 'district'>) => api.patch<User, typeof data>('/auth/profile', data),
-  forgotPassword: (email: string) => api.post<{ queued: boolean }, { email: string }>('/auth/forgot-password', { email }),
+  updateProfile: (data: { name?: string | null; phone?: string | null; district?: string | null }) => api.patch<User, typeof data>('/auth/profile', data),
 };
 
 export const caseRepository = {
@@ -13,7 +12,6 @@ export const caseRepository = {
   detail: (id: string, signal?: AbortSignal) => api.get<CaseRecord>(`/cases/${id}`, { signal }),
   create: (data: { title: string; description: string }) => api.post<CaseRecord, typeof data>('/cases', data),
   update: (id: string, data: { title?: string; description?: string; status?: CaseStatus }) => api.patch<CaseRecord, typeof data>(`/cases/${id}`, data),
-  remove: (id: string) => api.delete<null>(`/cases/${id}`),
   addEvidence: (id: string, data: { type: EvidenceType; label: string; reference: string; notes?: string }) => api.post<Evidence, typeof data>(`/cases/${id}/evidence`, data),
 };
 

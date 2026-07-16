@@ -1,5 +1,7 @@
 # Netrak Administration
 
+> Design direction document. Administrative mutations without gateway contracts are future scope; see `docs/release-scope.md`.
+
 ## Experience promise
 
 Administration is restrained enterprise software: clear access boundaries, accountable change, and immediate service visibility.

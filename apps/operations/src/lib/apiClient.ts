@@ -1,8 +1,7 @@
 import axios, { AxiosError, CanceledError, InternalAxiosRequestConfig, create, isAxiosError } from 'axios';
 import type { ApiEnvelope } from '@/types';
+import { API_RETRY_ATTEMPTS, API_TIMEOUT, API_URL } from './config';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-const TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT || 10000);
 const TOKEN_KEY = 'netrak.operations.token';
 
 interface RetryConfig extends InternalAxiosRequestConfig {
@@ -32,8 +31,8 @@ export const tokenStorage = {
   },
 };
 
-const client = create({ baseURL: API_URL, timeout: TIMEOUT, headers: { 'Content-Type': 'application/json' } });
-const refreshClient = axios.create({ baseURL: API_URL, timeout: TIMEOUT, headers: { 'Content-Type': 'application/json' } });
+const client = create({ baseURL: API_URL, timeout: API_TIMEOUT, headers: { 'Content-Type': 'application/json' } });
+const refreshClient = axios.create({ baseURL: API_URL, timeout: API_TIMEOUT, headers: { 'Content-Type': 'application/json' } });
 let refreshPromise: Promise<string | null> | null = null;
 
 client.interceptors.request.use((config) => {
@@ -69,7 +68,7 @@ client.interceptors.response.use(
     const method = request.method?.toLowerCase() ?? 'get';
     const retryable = ['get', 'head', 'options', 'put'].includes(method) && (!error.response || error.response.status >= 500);
     const retryCount = request._retryCount ?? 0;
-    if (retryable && retryCount < 2) {
+    if (retryable && retryCount < API_RETRY_ATTEMPTS) {
       request._retryCount = retryCount + 1;
       await delay(300 * 2 ** retryCount, request.signal);
       return client(request);
@@ -96,7 +95,6 @@ export const api = {
   get: <T>(url: string, options: RequestOptions = {}) => client.get<ApiEnvelope<T> | T>(url, options).then((response) => unwrap(response.data)),
   post: <T, Body = unknown>(url: string, body?: Body) => client.post<ApiEnvelope<T> | T>(url, body).then((response) => unwrap(response.data)),
   patch: <T, Body = unknown>(url: string, body?: Body) => client.patch<ApiEnvelope<T> | T>(url, body).then((response) => unwrap(response.data)),
-  delete: <T>(url: string) => client.delete<ApiEnvelope<T> | T>(url).then((response) => unwrap(response.data)),
 };
 
 export function getErrorMessage(error: unknown, fallback = 'The request could not be completed.') {
@@ -107,7 +105,7 @@ export function getErrorMessage(error: unknown, fallback = 'The request could no
     if (error.code === 'ECONNABORTED') return 'The request timed out. Try again.';
     if (!error.response) return 'Netrak services are unreachable. Check the network and retry.';
   }
-  return error instanceof Error ? error.message : fallback;
+  return fallback;
 }
 
 export function isNetworkError(error: unknown) {

@@ -1,7 +1,8 @@
 import { AlertTriangle, ChevronLeft, ChevronRight, Inbox, Search, X } from 'lucide-react';
-import { memo, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, useEffect, useId, useRef } from 'react';
+import { memo, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, useId } from 'react';
 import { getErrorMessage } from '@/lib/apiClient';
 import { titleCase } from '@/lib/format';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 export function Button({ variant = 'primary', className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger' }) {
   return <button className={`button button--${variant} ${className}`} {...props} />;
@@ -50,19 +51,7 @@ export function Pagination({ page, pages, onChange }: { page: number; pages: num
 }
 export function Dialog({ title, description, children, onClose }: { title: string; description?: string; children: ReactNode; onClose: () => void }) {
   const titleId = useId();
-  const dialogRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      previousFocus?.focus();
-    };
-  }, [onClose]);
+  const dialogRef = useModalFocus(onClose);
   return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><section ref={dialogRef} tabIndex={-1} className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}><header><div><h2 id={titleId}>{title}</h2>{description && <p>{description}</p>}</div><Button variant="ghost" onClick={onClose} aria-label="Close dialog"><X size={20} /></Button></header>{children}</section></div>;
 }
 export function DataTable({ headers, children }: { headers: string[]; children: ReactNode }) {

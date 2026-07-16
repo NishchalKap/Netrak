@@ -16,6 +16,10 @@ export const errorHandler = (error: unknown, req: Request, res: Response, _next:
     return sendError(res, 'Validation failed', 400, issues);
   }
 
+  if (isMalformedJsonError(error)) {
+    return sendError(res, 'Malformed JSON request', 400);
+  }
+
   if (error instanceof AppError) {
     if (error.statusCode >= 500) logger.error('Operational request error', { requestId, method: req.method, path: req.path, message: error.message });
     return sendError(res, error.message, error.statusCode);
@@ -29,3 +33,9 @@ export const errorHandler = (error: unknown, req: Request, res: Response, _next:
   });
   return sendError(res, 'Internal Server Error', 500);
 };
+
+export function isMalformedJsonError(error: unknown) {
+  if (!(error instanceof SyntaxError) || typeof error !== 'object' || error === null) return false;
+  const parserError = error as SyntaxError & { status?: unknown; type?: unknown };
+  return parserError.status === 400 && parserError.type === 'entity.parse.failed';
+}

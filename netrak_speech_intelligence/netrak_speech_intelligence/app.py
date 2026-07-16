@@ -54,9 +54,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Netrak Speech Intelligence Service",
-    description="AI-powered speech analysis for scam detection and fraud prevention",
-    version="1.0.0",
+    title="Netrak Speech Intelligence Experimental Service",
+    description="Standalone research prototype for speech-analysis integration experiments; not part of the Netrak v1.0 release",
+    version="0.1.0-experimental",
     lifespan=lifespan
 )
 
@@ -82,7 +82,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "netrak-speech-intelligence",
-        "version": "1.0.0"
+        "version": "0.1.0-experimental"
     }
 
 

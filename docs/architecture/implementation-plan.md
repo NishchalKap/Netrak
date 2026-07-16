@@ -1,5 +1,7 @@
 # Netrak Implementation and Cleanup Plan
 
+> Status: historical roadmap. Items below are not release claims. The authoritative implementation status is maintained in `docs/release-scope.md`.
+
 ## Objective
 
 Turn the repository into a clear product workspace that separates research, architecture, application code, backend services, and shared contracts. The cleanup will preserve the strategy documents while making the implementation path explicit and maintainable.

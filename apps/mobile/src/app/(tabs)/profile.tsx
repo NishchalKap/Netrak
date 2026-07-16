@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -7,11 +7,9 @@ import { Typography } from '@/components/ui/Typography';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SkeletonList } from '@/components/ui/SkeletonList';
 import { useUserStore } from '@/store/userStore';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { authApi } from '@/services/authApi';
 import { User } from '@/types';
 
 export default function ProfileScreen() {
@@ -45,7 +43,7 @@ export default function ProfileScreen() {
         <View style={styles.identityText}>
           <Text style={[styles.name, { color: colors.text }]}>{profile?.name || profile?.email || 'Citizen User'}</Text>
           <Text style={[styles.email, { color: colors.muted }]}>{profile?.email ?? 'Profile unavailable'}</Text>
-          <StatusBadge value="low" />
+          <Text style={[styles.role, { color: colors.tint }]}>{profile?.role ?? 'CITIZEN'} ACCOUNT</Text>
         </View>
       </Card>
 
@@ -73,7 +71,6 @@ function ProfileEditor({ profile }: { profile: User }) {
   const [district, setDistrict] = useState(profile.district ?? '');
   const [saved, setSaved] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const saveProfile = async () => {
     const normalizedPhone = phone.replace(/[\s()-]/g, '');
@@ -84,23 +81,11 @@ function ProfileEditor({ profile }: { profile: User }) {
     setValidationError(null);
     setSaved(false);
     const updated = await updateProfile({
-      name: name.trim() || undefined,
-      phone: phone.trim() || undefined,
-      district: district.trim() || undefined,
+      name: name.trim() || null,
+      phone: phone.trim() || null,
+      district: district.trim() || null,
     });
     setSaved(Boolean(updated));
-  };
-
-  const resetPassword = async () => {
-    setIsResettingPassword(true);
-    try {
-      await authApi.forgotPassword(profile.email);
-      Alert.alert('Reset instructions requested', 'If this account can receive email, password reset instructions will be sent shortly.');
-    } catch {
-      Alert.alert('Unable to request reset', 'Check your connection and try again.');
-    } finally {
-      setIsResettingPassword(false);
-    }
   };
 
   return (
@@ -122,22 +107,17 @@ function ProfileEditor({ profile }: { profile: User }) {
           <Text style={[styles.rowValue, { color: colors.text }]}>{profile.role}</Text>
         </View>
         <View style={[styles.row, { borderTopColor: colors.border }]}>
-          <Text style={[styles.rowLabel, { color: colors.muted }]}>Verification</Text>
-          <Text style={[styles.rowValue, { color: colors.text }]}>Basic</Text>
+          <Text style={[styles.rowLabel, { color: colors.muted }]}>Password recovery</Text>
+          <Text style={[styles.rowValue, { color: colors.text }]}>Deployment-managed</Text>
         </View>
-        <Button
-          title="Send password reset instructions"
-          iconName="lock-reset"
-          variant="outline"
-          loading={isResettingPassword}
-          onPress={() => { void resetPassword(); }}
-        />
+        <Text style={[styles.accountNote, { color: colors.muted }]}>Self-service reset delivery is not configured in this release. Contact the administrator responsible for your deployment if access must be recovered.</Text>
       </Card>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  accountNote: { fontSize: 12, lineHeight: 18, marginTop: 8 },
   avatar: { alignItems: 'center', borderRadius: 18, borderWidth: 1, height: 64, justifyContent: 'center', width: 64 },
   backButton: { alignItems: 'center', borderRadius: 14, borderWidth: 1, height: 42, justifyContent: 'center', marginBottom: 12, width: 42 },
   email: { fontSize: 13, marginBottom: 8, marginTop: 2 },
@@ -147,6 +127,7 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
   rowLabel: { fontSize: 14, fontWeight: '700' },
   rowValue: { fontSize: 14, fontWeight: '900' },
+  role: { fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
   saved: { fontSize: 13, fontWeight: '700', marginTop: 4 },
   section: { marginBottom: 12 },
   sectionTitle: { fontSize: 15, fontWeight: '900', marginBottom: 8 },

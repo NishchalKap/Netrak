@@ -55,7 +55,7 @@ Swagger does not currently expose contracts for users, assignments, officer note
 - administrative controls explain which contract is missing;
 - assignment, notes, and chain-of-custody panels are read-only notices;
 - geospatial components consume a typed future GeoJSON boundary and render no guessed coordinates;
-- realtime transport is an unconfigured typed abstraction while views use transparent polling;
+- realtime controls are absent while views use transparent polling and explain the missing stream contract;
 - related intelligence is labeled as deterministic keyword correlation, not AI analysis.
 
 These boundaries allow backend capabilities to be added without redesigning the officer experience or misleading operators today.

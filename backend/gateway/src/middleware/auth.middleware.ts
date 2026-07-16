@@ -24,7 +24,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
       issuer: env.JWT_ISSUER,
       audience: env.JWT_AUDIENCE,
     }) as JwtPayload;
-    if (typeof decoded.id !== 'string' || !USER_ROLES.includes(decoded.role as UserRole)) {
+    if (typeof decoded.id !== 'string' || decoded.sub !== decoded.id || !USER_ROLES.includes(decoded.role as UserRole)) {
       return next(new AppError('Invalid authentication token', 401));
     }
     req.user = { id: decoded.id, role: decoded.role as UserRole };

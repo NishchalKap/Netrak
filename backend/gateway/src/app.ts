@@ -8,14 +8,12 @@ import { swaggerSpec } from './config/swagger';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
 import apiRoutes from './routes';
-import { sendError, sendSuccess } from './common/response';
+import { sendSuccess } from './common/response';
 import { AppError } from './common/AppError';
 import { logger } from './common/logger';
+import { createRateLimiter, emailRateLimitKey } from './middleware/rate-limit.middleware';
 
 const app: Application = express();
-const authAttempts = new Map<string, { count: number; resetAt: number }>();
-const AUTH_WINDOW_MS = 15 * 60 * 1000;
-const AUTH_MAX_REQUESTS = 30;
 
 app.disable('x-powered-by');
 if (env.TRUST_PROXY) app.set('trust proxy', 1);
@@ -37,8 +35,8 @@ app.use(cors({
     return callback(new AppError('Origin is not permitted', 403));
   },
 }));
+app.use('/api', createRateLimiter({ windowMs: 5 * 60 * 1000, maxRequests: 600 }));
 app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 morgan.token('request-id', (_req, res) => String(res.getHeader('X-Request-Id') ?? '-'));
 morgan.token('safe-path', (req) => (req as Request).path);
 app.use(morgan(':method :safe-path :status :response-time ms request_id=:request-id', {
@@ -46,29 +44,29 @@ app.use(morgan(':method :safe-path :status :response-time ms request_id=:request
   stream: { write: (message) => logger.info(message.trim()) },
 }));
 
-app.use('/api/auth', (req, res, next) => {
-  if (req.method !== 'POST') return next();
-  const now = Date.now();
-  const key = `${req.ip}:${req.path}`;
-  const current = authAttempts.get(key);
-  const bucket = !current || current.resetAt <= now ? { count: 0, resetAt: now + AUTH_WINDOW_MS } : current;
-  bucket.count += 1;
-  authAttempts.set(key, bucket);
-  if (authAttempts.size > 10000) {
-    for (const [candidate, value] of authAttempts) if (value.resetAt <= now) authAttempts.delete(candidate);
-  }
-  res.setHeader('RateLimit-Limit', AUTH_MAX_REQUESTS);
-  res.setHeader('RateLimit-Remaining', Math.max(0, AUTH_MAX_REQUESTS - bucket.count));
-  res.setHeader('RateLimit-Reset', Math.ceil(bucket.resetAt / 1000));
-  if (bucket.count > AUTH_MAX_REQUESTS) {
-    res.setHeader('Retry-After', Math.ceil((bucket.resetAt - now) / 1000));
-    return sendError(res, 'Too many authentication attempts. Try again later.', 429);
-  }
-  return next();
-});
+const noStore = (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  next();
+};
+app.use(['/api/auth', '/api/cases', '/api/notifications'], noStore);
+app.use('/api/auth/login', createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 10, key: emailRateLimitKey, message: 'Too many sign-in attempts. Try again later.' }));
+app.use('/api/auth/register', createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 5, key: emailRateLimitKey, message: 'Too many registration attempts. Try again later.' }));
+app.use('/api/auth/forgot-password', createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 5, key: emailRateLimitKey, message: 'Too many recovery requests. Try again later.' }));
+app.use('/api/auth/refresh', createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 60, message: 'Too many session refresh attempts. Sign in again.' }));
 
 if (env.API_DOCS_ENABLED) {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  const documentationCsp = helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  });
+  app.use('/api-docs', documentationCsp, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
 }
 

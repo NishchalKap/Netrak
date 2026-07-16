@@ -29,13 +29,27 @@ export class CaseService {
     const caseItem = await this.caseRepository.findById(id);
     if (!caseItem) throw new AppError('Case not found', 404);
     this.ensureAccess(caseItem.userId, actor);
-    return this.caseRepository.update(id, data);
+    if (actor.role === 'CITIZEN' && data.status) throw new AppError('Only authorized staff can change case workflow status', 403);
+    if (actor.role === 'CITIZEN' && caseItem.status !== 'OPEN') throw new AppError('Case details cannot be edited after review begins', 409);
+
+    const statusChanged = Boolean(data.status && data.status !== caseItem.status);
+    const detailsChanged = Boolean(data.title || data.description);
+    const title = statusChanged && detailsChanged
+      ? 'Case status and details updated'
+      : statusChanged
+        ? 'Case status changed'
+        : 'Case details updated';
+    const detail = statusChanged
+      ? `Workflow moved from ${caseItem.status} to ${data.status} by an authorized ${actor.role.toLowerCase()} account.`
+      : `Case details were updated by the ${actor.role.toLowerCase()} account.`;
+    return this.caseRepository.update(id, data, { title, detail });
   }
 
   async deleteCase(id: string, actor: AuthenticatedUser) {
     const caseItem = await this.caseRepository.findById(id);
     if (!caseItem) throw new AppError('Case not found', 404);
     this.ensureAccess(caseItem.userId, actor);
+    if (actor.role === 'CITIZEN' && caseItem.status !== 'OPEN') throw new AppError('A case cannot be deleted after review begins', 409);
     return this.caseRepository.delete(id);
   }
 

@@ -1,5 +1,7 @@
 # Netrak Components
 
+> Design reference, not a release capability checklist. See `docs/release-scope.md` for implemented v1.0 behavior.
+
 ## Principles
 
 Components are calm, direct, and consistent. Use one visual emphasis per region. A component earns elevation only when it groups a decision or changes hierarchy.

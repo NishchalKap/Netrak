@@ -34,12 +34,12 @@ export default function ThreatsScreen() {
   const header = <>
     <View style={styles.header}>
       <Typography variant="h1">Threat Feed</Typography>
-      <Text style={[styles.subtitle, { color: colors.muted }]}>{criticalCount} priority advisories active</Text>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>{criticalCount} priority advisories in this feed</Text>
     </View>
     <SyncStatus error={error} cached={source === 'cached'} lastSyncedAt={lastSyncedAt} onRetry={() => { void fetchThreats(true); }} />
     <Card tone="muted" style={styles.briefing}>
       <Text style={[styles.briefingTitle, { color: colors.text }]}>Citizen Watch</Text>
-      <Text style={[styles.briefingText, { color: colors.muted }]}>Review active advisories before responding to unfamiliar calls, links, or payment requests.</Text>
+      <Text style={[styles.briefingText, { color: colors.muted }]}>Review configured advisories before responding to unfamiliar calls, links, or payment requests.</Text>
       <Button title="Report matching incident" iconName="file-alert-outline" variant="secondary" onPress={() => router.push('/(tabs)/report')} />
     </Card>
     <View accessibilityRole="radiogroup" style={styles.filters}>
@@ -58,7 +58,7 @@ export default function ThreatsScreen() {
       renderItem={renderThreat}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={header}
-      ListEmptyComponent={isLoading && !threats.length ? <SkeletonList /> : <EmptyState iconName="radar" title="No active advisories" message={error ? 'Threat intelligence could not be loaded. Pull down to retry.' : 'There are no advisories matching this filter.'} />}
+      ListEmptyComponent={isLoading && !threats.length ? <SkeletonList /> : <EmptyState iconName="radar" title="No configured advisories" message={error ? 'Threat advisories could not be loaded. Pull down to retry.' : 'There are no advisories matching this filter.'} />}
       refreshing={isLoading && threats.length > 0}
       onRefresh={() => { void fetchThreats(true); }}
       initialNumToRender={6}

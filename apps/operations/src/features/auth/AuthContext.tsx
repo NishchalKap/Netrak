@@ -23,7 +23,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     if (tokenStorage.get()) {
       void authRepository.profile(controller.signal)
-        .then((profile) => { if (!controller.signal.aborted) setUser(profile); })
+        .then((profile) => {
+          if (controller.signal.aborted) return;
+          if (profile.role === 'CITIZEN') { tokenStorage.clear(); setUser(null); return; }
+          setUser(profile);
+        })
         .catch(() => { if (!controller.signal.aborted) { tokenStorage.clear(); setUser(null); } })
         .finally(() => { if (!controller.signal.aborted) setInitializing(false); });
     }
@@ -37,6 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await authRepository.login(email, password);
+    if (response.user.role === 'CITIZEN') {
+      throw new Error('Citizen accounts must use the Netrak citizen application.');
+    }
     tokenStorage.set(response.token);
     setUser(response.user);
     return response.user;

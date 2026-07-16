@@ -10,17 +10,22 @@ npm run verify
 npm run export --prefix apps/mobile
 ```
 
-The release-candidate workflow independently validates the gateway, operations workspace, Expo exports, production dependency audit, Prisma schema, and gateway container build.
+The Prisma validation task supplies a non-routable validation-only database URL when `DATABASE_URL` is absent. It validates schema configuration without connecting to a database; application startup and migrations still require a real deployment-owned PostgreSQL URL.
+
+The release-candidate workflow independently validates the gateway, operations workspace, Expo exports, production dependency audit, Prisma schema and migration, PostgreSQL-backed ownership/workflow contracts, and gateway container build.
 
 ## Required production configuration
 
 Copy each application `.env.example` into the deployment secret/configuration system. Do not commit populated `.env` files.
+
+Apply `npm run prisma:migrate:deploy` as a controlled pre-start deployment job. Do not make application containers mutate the schema automatically on boot.
 
 - Gateway: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, issuer/audience, proxy and API-doc controls.
 - Operations: `VITE_API_URL`, timeout, and polling interval. All `VITE_` values are public at build time.
 - Expo: `EXPO_PUBLIC_API_URL`, timeout, and retries. All `EXPO_PUBLIC_` values are bundled and must never contain secrets.
 
 `API_DOCS_ENABLED` defaults off in production. `ALLOW_PRIVILEGED_REGISTRATION` must remain false; officer and administrator identities must be provisioned through the deployment's controlled process.
+`LOAD_REFERENCE_ADVISORIES` must remain false when the threat table is populated from an authoritative operational source.
 
 ## Deployment
 
@@ -34,7 +39,7 @@ The gateway emits structured JSON logs in production with request correlation ID
 
 ## Release limitations
 
-- Automated coverage currently protects gateway validation, JWT, and role authorization contracts. Full API integration tests require an ephemeral PostgreSQL service and seeded role fixtures.
+- Automated coverage protects gateway validation, JWT, replay, rate-limit, role authorization, ownership, evidence, notification, persisted timeline, geospatial-safety, and external-reference contracts. GitHub Actions runs the database contracts against an ephemeral PostgreSQL service.
 - Native Android and iOS signed builds require external EAS/store credentials. CI validates their JavaScript and asset exports.
-- Password-reset delivery depends on deployment-specific identity/email infrastructure; the public response remains enumeration-safe.
-- Expo's native build toolchain currently reports 11 moderate `uuid` advisories through `xcode`/Expo config packages. No high or critical advisory is present, and npm's proposed forced remedy is a breaking Expo downgrade; track the upstream Expo dependency update rather than applying `npm audit fix --force`.
+- Password-reset delivery is future scope. The reserved endpoint returns an enumeration-safe `503` rather than claiming that an email was queued.
+- The 16 July 2026 registry audit reports 11 moderate instances of `GHSA-w5hq-g745-h8pq` through Expo's transitive `xcode` configuration tool and `uuid <11.1.1`. npm offers only `--force`, which would downgrade `expo-splash-screen` to SDK 55 and break the SDK 57 application. No high or critical advisory is reported. The release workflow reruns production dependency audits and must pass the high-severity threshold; track the upstream Expo fix rather than forcing the breaking downgrade.

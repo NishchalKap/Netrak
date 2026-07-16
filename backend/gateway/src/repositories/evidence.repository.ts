@@ -6,8 +6,4 @@ export class EvidenceRepository {
       data: { ...data, caseId },
     });
   }
-
-  async findByCaseId(caseId: string) {
-    return prisma.caseEvidence.findMany({ where: { caseId }, orderBy: { createdAt: 'desc' } });
-  }
 }

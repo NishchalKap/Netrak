@@ -53,7 +53,7 @@ export function LoginPage() {
         <h2>Sign in to operations.</h2>
         <p>Use your Netrak-issued credentials.</p>
         <Field label="Work email"><input autoComplete="email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="officer@agency.gov.in" /></Field>
-        <Field label="Password"><input autoComplete="current-password" type="password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your secure password" /></Field>
+        <Field label="Password"><input autoComplete="current-password" type="password" required maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your secure password" /></Field>
         {error && <div className="form-error" role="alert">{error}</div>}
         <Button type="submit" disabled={loading}>{loading ? 'Verifying access...' : 'Continue'} <ArrowRight size={17} /></Button>
       </form>

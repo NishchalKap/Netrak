@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { caseApi } from '@/services/caseApi';
-import { Case, CreateCaseInput, Evidence, UpdateCaseInput } from '../types';
+import { Case, CreateCaseInput, Evidence } from '../types';
 import { getApiErrorMessage } from '@/services/apiError';
-import { makeLocalId } from '@/utils';
 import { useUserStore } from './userStore';
 
 type DataSource = 'idle' | 'online' | 'cached';
@@ -19,7 +18,6 @@ interface CaseState {
   fetchCases: (force?: boolean) => Promise<Case[]>;
   fetchCaseById: (id: string) => Promise<Case | null>;
   createCase: (input: CreateCaseInput) => Promise<Case | null>;
-  updateCase: (id: string, input: UpdateCaseInput) => Promise<Case | null>;
   deleteCase: (id: string) => Promise<boolean>;
   addEvidence: (caseId: string, evidence: Omit<Evidence, 'id' | 'createdAt'>) => Promise<Evidence | null>;
   clearError: () => void;
@@ -85,26 +83,11 @@ export const useCaseStore = create<CaseState>((set, get) => ({
   createCase: async (input) => {
     set({ isMutating: true, mutationError: null });
     try {
-      const remote = normalizeCase(await caseApi.createCase({ title: input.title, description: input.description }));
-      const created = { ...remote, category: input.category ?? remote.category, location: input.location ?? remote.location, riskLevel: input.riskLevel ?? remote.riskLevel };
+      const created = normalizeCase(await caseApi.createCase(input));
       set((state) => ({ cases: upsertCase(state.cases, created), selectedCase: created, isMutating: false, source: 'online' }));
       return created;
     } catch (error) {
       set({ isMutating: false, mutationError: getApiErrorMessage(error, 'Your report could not be submitted. Nothing was saved.') });
-      return null;
-    }
-  },
-  updateCase: async (id, input) => {
-    const current = get().cases.find((item) => item.id === id) ?? get().selectedCase;
-    if (!current || current.id !== id) return null;
-    const optimistic = { ...current, ...input, updatedAt: new Date().toISOString() };
-    set((state) => ({ cases: upsertCase(state.cases, optimistic), selectedCase: optimistic, isMutating: true, mutationError: null }));
-    try {
-      const remote = normalizeCase(await caseApi.updateCase(id, input));
-      set((state) => ({ cases: upsertCase(state.cases, remote), selectedCase: remote, isMutating: false, source: 'online' }));
-      return remote;
-    } catch (error) {
-      set((state) => ({ cases: upsertCase(state.cases, current), selectedCase: current, isMutating: false, mutationError: getApiErrorMessage(error, 'The case update was not saved.') }));
       return null;
     }
   },
@@ -147,16 +130,13 @@ export const useCaseStore = create<CaseState>((set, get) => ({
 }));
 
 function normalizeCase(item: Case): Case {
-  const timestamp = new Date().toISOString();
   return {
     ...item,
     status: item.status ?? 'OPEN',
     riskLevel: item.riskLevel ?? inferRisk(item.title, item.description),
     category: item.category ?? inferCategory(item.title, item.description),
     evidence: item.evidence ?? [],
-    timeline: item.timeline ?? [{ id: makeLocalId('timeline'), title: 'Case created', detail: 'Case submitted for review.', createdAt: item.createdAt ?? timestamp }],
-    createdAt: item.createdAt ?? timestamp,
-    updatedAt: item.updatedAt ?? timestamp,
+    timeline: item.timeline ?? [],
   };
 }
 

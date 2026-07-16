@@ -39,6 +39,9 @@ model Case {
 
   evidence CaseEvidence[]
   timeline CaseTimelineEvent[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, updatedAt(sort: Desc)])
 }
 
 model CaseEvidence {
@@ -50,6 +53,8 @@ model CaseEvidence {
   caseId    String
   case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt(sort: Desc)])
 }
 
 model CaseTimelineEvent {
@@ -59,6 +64,8 @@ model CaseTimelineEvent {
   caseId    String
   case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt(sort: Desc)])
 }
 
 model Notification {
@@ -68,6 +75,9 @@ model Notification {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, read])
 }
 
 model Threat {
@@ -80,4 +90,9 @@ model Threat {
   indicators Json
   updatedAt  DateTime @updatedAt
   createdAt  DateTime @default(now())
+
+  @@index([category])
+  @@index([level])
+  @@index([region])
+  @@index([updatedAt(sort: Desc)])
 }

@@ -1,50 +1,25 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { router } from 'expo-router';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Typography } from '@/components/ui/Typography';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { isValidEmail } from '@/utils';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { authApi } from '@/services/authApi';
-import { getApiErrorMessage } from '@/services/apiError';
 
 export default function ForgotPasswordScreen() {
   const { colors } = useAppTheme();
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSent, setIsSent] = useState(false);
-
-  const handleReset = async () => {
-    if (!isValidEmail(email)) {
-      setError('Enter a valid email address.');
-      return;
-    }
-
-    setError(null);
-    setIsLoading(true);
-    try {
-      await authApi.forgotPassword(email.trim());
-      setIsSent(true);
-      Alert.alert('Reset link queued', 'If the account exists, password reset instructions will be sent shortly.');
-    } catch (requestError) {
-      setError(getApiErrorMessage(requestError, 'Unable to request a reset link. Please try again.'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <ScreenContainer scroll contentContainerStyle={styles.scroll}>
-      <Typography variant="h1">Reset Password</Typography>
+      <Typography variant="h1">Password recovery</Typography>
       <Card>
-        <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
-        {error && <Text accessibilityRole="alert" style={[styles.error, { color: colors.danger }]}>{error}</Text>}
-        {isSent && <Text accessibilityLiveRegion="polite" style={[styles.success, { color: colors.success }]}>Reset request submitted.</Text>}
-        <Button title="Send reset link" iconName="email-fast-outline" loading={isLoading} onPress={handleReset} />
+        <Text style={[styles.title, { color: colors.text }]}>Deployment integration required</Text>
+        <Text style={[styles.body, { color: colors.muted }]}>
+          Self-service email delivery is not configured in this release. Contact the administrator responsible for your Netrak deployment to recover access.
+        </Text>
+        <Text style={[styles.note, { color: colors.muted, borderTopColor: colors.border }]}>
+          Netrak will not claim that a reset message was sent when no approved delivery provider is connected.
+        </Text>
       </Card>
       <Pressable accessibilityRole="button" style={styles.back} onPress={() => router.back()}>
         <Text style={[styles.link, { color: colors.tint }]}>Back to sign in</Text>
@@ -54,20 +29,10 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: {
-    alignItems: 'center',
-    marginTop: 18,
-  },
-  error: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  link: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  scroll: {
-    justifyContent: 'center',
-  },
-  success: { fontSize: 13, fontWeight: '600', marginTop: 4 },
+  back: { alignItems: 'center', marginTop: 18 },
+  body: { fontSize: 14, lineHeight: 21, marginTop: 8 },
+  link: { fontSize: 14, fontWeight: '700' },
+  note: { borderTopWidth: StyleSheet.hairlineWidth, fontSize: 12, lineHeight: 18, marginTop: 18, paddingTop: 16 },
+  scroll: { justifyContent: 'center' },
+  title: { fontSize: 17, fontWeight: '800' },
 });

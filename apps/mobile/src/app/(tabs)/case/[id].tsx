@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -13,16 +13,8 @@ import { SkeletonList } from '@/components/ui/SkeletonList';
 import { SyncStatus } from '@/components/ui/SyncStatus';
 import { EvidenceList } from '@/components/evidence/EvidenceList';
 import { useCaseStore } from '@/store/caseStore';
-import { CaseStatus } from '@/types';
-import { formatDateTime, getIncidentCategoryLabel, getRiskLabel, getStatusLabel } from '@/utils';
+import { formatDateTime, getIncidentCategoryLabel, getRiskLabel } from '@/utils';
 import { useAppTheme } from '@/hooks/useAppTheme';
-
-const nextStatus: Record<CaseStatus, CaseStatus> = {
-  OPEN: 'IN_PROGRESS',
-  IN_PROGRESS: 'ESCALATED',
-  ESCALATED: 'CLOSED',
-  CLOSED: 'CLOSED',
-};
 
 export default function CaseDetailsScreen() {
   const { colors } = useAppTheme();
@@ -31,7 +23,6 @@ export default function CaseDetailsScreen() {
   const cases = useCaseStore((state) => state.cases);
   const selectedCase = useCaseStore((state) => state.selectedCase);
   const fetchCaseById = useCaseStore((state) => state.fetchCaseById);
-  const updateCase = useCaseStore((state) => state.updateCase);
   const deleteCase = useCaseStore((state) => state.deleteCase);
   const isLoading = useCaseStore((state) => state.isLoading);
   const isMutating = useCaseStore((state) => state.isMutating);
@@ -47,19 +38,8 @@ export default function CaseDetailsScreen() {
     if (caseId) void fetchCaseById(caseId);
   }, [caseId, fetchCaseById]);
 
-  const nextAction = useMemo(() => {
-    if (!caseItem || caseItem.status === 'CLOSED') return null;
-    const status = nextStatus[caseItem.status];
-    return { status, label: `Mark ${getStatusLabel(status)}` };
-  }, [caseItem]);
-
-  const handleStatusUpdate = async () => {
-    if (!caseItem || !nextAction) return;
-    await updateCase(caseItem.id, { status: nextAction.status });
-  };
-
   const handleDelete = () => {
-    if (!caseItem) return;
+    if (!caseItem || caseItem.status !== 'OPEN') return;
     Alert.alert(
       'Delete this case?',
       'This permanently removes the case and its evidence references. This action cannot be undone.',
@@ -136,23 +116,14 @@ export default function CaseDetailsScreen() {
         iconName="paperclip"
         onPress={() => router.push({ pathname: '/(tabs)/upload', params: { caseId: caseItem.id } })}
       />
-      {nextAction && (
-        <Button
-          title={nextAction.label}
-          iconName="progress-check"
-          variant="outline"
-          loading={isMutating}
-          onPress={handleStatusUpdate}
-        />
-      )}
       {mutationError && <Text accessibilityRole="alert" style={[styles.actionError, { color: colors.danger }]}>{mutationError}</Text>}
       <SectionHeader title="Case timeline" />
       <View style={styles.timeline}>
-        {(caseItem.timeline ?? []).map((event, index) => (
+        {(caseItem.timeline?.length ? caseItem.timeline : [{ id: `created-${caseItem.id}`, title: 'Case created', detail: 'Timestamp recorded by the case service.', createdAt: caseItem.createdAt }]).map((event, index, events) => (
           <View key={event.id} style={styles.timelineItem}>
             <View style={styles.rail}>
               <View style={[styles.timelineDot, { backgroundColor: index === 0 ? colors.tint : colors.muted }]} />
-              {index < (caseItem.timeline?.length ?? 0) - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.border }]} />}
+              {index < events.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.border }]} />}
             </View>
             <View style={[styles.timelineContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.timelineTitle, { color: colors.text }]}>{event.title}</Text>
@@ -169,13 +140,13 @@ export default function CaseDetailsScreen() {
         <Meta icon="shield-outline" label="Risk level" value={getRiskLabel(caseItem.riskLevel)} colors={colors} />
         <Meta icon="clock-outline" label="Last updated" value={formatDateTime(caseItem.updatedAt)} colors={colors} />
       </Card>
-      <Button
-        title="Delete case"
-        iconName="trash-can-outline"
-        variant="danger"
-        disabled={isMutating}
-        onPress={handleDelete}
-      />
+      {caseItem.status === 'OPEN' ? <Button
+          title="Delete case"
+          iconName="trash-can-outline"
+          variant="danger"
+          disabled={isMutating}
+          onPress={handleDelete}
+        /> : <Text style={[styles.reviewNotice, { color: colors.muted }]}>This case is under official review. Workflow status and record deletion are controlled by authorized staff.</Text>}
     </ScreenContainer>
   );
 }
@@ -208,6 +179,7 @@ const styles = StyleSheet.create({
   metaLine: { flexDirection: 'row', gap: 28, marginTop: 20, paddingTop: 4 },
   metaValue: { fontSize: 13, fontWeight: '600', marginTop: 2 },
   rail: { alignItems: 'center', width: 10 },
+  reviewNotice: { fontSize: 13, lineHeight: 20, marginTop: 12, textAlign: 'center' },
   summary: { marginBottom: 12 },
   timeline: { gap: 0 },
   timelineContent: { borderRadius: 16, borderWidth: 1, flex: 1, marginBottom: 12, padding: 14 },

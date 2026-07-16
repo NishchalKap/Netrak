@@ -1,5 +1,7 @@
 # Netrak Landing Page
 
+> Design direction document. It does not assert that every described section is included in the v1.0 application. See `docs/release-scope.md`.
+
 ## Goal
 
 Establish Netrak as public-interest infrastructure that is contemporary, calm, and credible to citizens, government, banks, and telecom partners.

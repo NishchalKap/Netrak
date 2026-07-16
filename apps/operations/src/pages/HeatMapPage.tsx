@@ -1,11 +1,73 @@
 import { Layers3, LocateFixed, MapPinned } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CapabilityNotice, Card, EmptyState, ErrorState, PageHeader, RiskBadge, SectionHeader, Skeleton } from '@/components/ui';
 import { useCases } from '@/data/queries';
 import { formatDate, inferRisk, toGeoJson } from '@/lib/format';
 
 export function HeatMapPage() {
-  const query = useCases(); const [layer, setLayer] = useState('incidents'); const [risk, setRisk] = useState('ALL'); const geo = toGeoJson(query.data ?? []);
-  const located = (query.data ?? []).filter((item) => item.location && (risk === 'ALL' || inferRisk(item) === risk));
-  return <><PageHeader eyebrow="Geospatial operations" title="Incident geography" description="Location context from case records, with a GeoJSON-ready boundary for future coordinates." actions={<div className="header-badges"><select value={layer} onChange={(event) => setLayer(event.target.value)} aria-label="Map layer"><option value="incidents">Incident layer</option><option value="threats">Threat layer</option></select><select value={risk} onChange={(event) => setRisk(event.target.value)} aria-label="Risk filter"><option value="ALL">All risk</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>} />{query.isLoading ? <Skeleton rows={9} /> : query.isError ? <ErrorState error={query.error} retry={() => void query.refetch()} /> : <div className="map-layout"><Card className="map-canvas"><div className="map-grid" aria-label="Map data area"><div className="map-crosshair"><LocateFixed size={32} /></div>{geo.features.length === 0 ? <EmptyState icon={<MapPinned size={24} />} title="Coordinates are not yet available" description="The case API currently provides optional location labels but no latitude and longitude. Netrak will render a true geospatial layer when coordinates are present." /> : geo.features.map((feature) => <i key={feature.id} className={`map-point map-point--${feature.properties.severity}`} title={feature.properties.label} />)}<span className="map-watermark"><Layers3 size={15} /> {layer === 'incidents' ? 'Incident geometry' : 'Threat geometry'} · {geo.features.length} plotted</span></div></Card><Card className="location-index"><SectionHeader title="Reported locations" description="Text labels from official case records; not geocoded or approximated." />{located.length === 0 ? <EmptyState title="No location labels" description="No cases in the selected risk band contain a location field." /> : <div className="compact-list">{located.map((item) => <a href={`/cases/${item.id}`} key={item.id}><div><strong>{item.location}</strong><span>{item.title} · {formatDate(item.updatedAt)}</span></div><RiskBadge value={inferRisk(item)} /></a>)}</div>}</Card></div>}<CapabilityNotice title="No inferred or synthetic coordinates">The current API contract does not expose latitude/longitude or a GIS endpoint. Location strings remain visible, but this view intentionally does not geocode, guess, or generate map points.</CapabilityNotice></>;
+  const query = useCases();
+  const [risk, setRisk] = useState('ALL');
+  const geo = toGeoJson(query.data ?? []);
+  const located = (query.data ?? []).filter(
+    (item) => item.location && (risk === 'ALL' || inferRisk(item) === risk)
+  );
+
+  return <>
+    <PageHeader
+      eyebrow="Geospatial operations"
+      title="Incident geography"
+      description="Location context from case records, with a GeoJSON-ready boundary for future coordinates."
+      actions={
+        <select value={risk} onChange={(event) => setRisk(event.target.value)} aria-label="Risk filter">
+          <option value="ALL">All risk</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      }
+    />
+    {query.isLoading ? <Skeleton rows={9} /> : query.isError ? (
+      <ErrorState error={query.error} retry={() => void query.refetch()} />
+    ) : (
+      <div className="map-layout">
+        <Card className="map-canvas">
+          <div className="map-grid" aria-label="Map data area">
+            <div className="map-crosshair"><LocateFixed size={32} /></div>
+            {geo.features.length === 0 ? (
+              <EmptyState
+                icon={<MapPinned size={24} />}
+                title="Coordinates are not yet available"
+                description="The case API currently provides optional location labels but no latitude and longitude. Netrak will render a true geospatial layer when coordinates are present."
+              />
+            ) : geo.features.map((feature) => (
+              <i
+                key={feature.id}
+                className={`map-point map-point--${feature.properties.severity}`}
+                title={feature.properties.label}
+              />
+            ))}
+            <span className="map-watermark"><Layers3 size={15} /> Incident geometry · {geo.features.length} plotted</span>
+          </div>
+        </Card>
+        <Card className="location-index">
+          <SectionHeader title="Reported locations" description="Text labels from official case records; not geocoded or approximated." />
+          {located.length === 0 ? (
+            <EmptyState title="No location labels" description="No cases in the selected risk band contain a location field." />
+          ) : (
+            <div className="compact-list">{located.map((item) => (
+              <Link to={`/cases/${item.id}`} key={item.id}>
+                <div><strong>{item.location}</strong><span>{item.title} · {formatDate(item.updatedAt)}</span></div>
+                <RiskBadge value={inferRisk(item)} />
+              </Link>
+            ))}</div>
+          )}
+        </Card>
+      </div>
+    )}
+    <CapabilityNotice title="No inferred or synthetic coordinates">
+      The current API contract does not expose latitude/longitude or a GIS endpoint. Location strings remain visible, but this view intentionally does not geocode, guess, or generate map points.
+    </CapabilityNotice>
+  </>;
 }

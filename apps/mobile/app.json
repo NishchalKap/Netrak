@@ -6,16 +6,7 @@
     "scheme": "netrak",
     "plugins": [
       "expo-router",
-      "expo-secure-store",
-      "expo-document-picker",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow Netrak to select photos and videos as case evidence.",
-          "cameraPermission": "Allow Netrak to capture photos as case evidence.",
-          "microphonePermission": false
-        }
-      ]
+      "expo-secure-store"
     ]
   }
 }

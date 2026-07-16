@@ -1,5 +1,7 @@
 # Netrak Law Enforcement Workspace
 
+> Design direction document. The implemented v1.0 scope and integration limitations are defined in `docs/release-scope.md`.
+
 ## Experience promise
 
 This is mission control: dense, fast, auditable, and calm. It uses the citizen design system but allocates more screen area to information.
