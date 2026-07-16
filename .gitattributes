@@ -1,0 +1,23 @@
+# Set default behavior to automatic text conversion.
+* text=auto
+
+# Declare files that will always have LF line endings on checkout.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.prisma text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Denote files to leave untouched (binary).
+*.docx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
