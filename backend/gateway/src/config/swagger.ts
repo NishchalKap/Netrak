@@ -12,7 +12,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: env.PUBLIC_API_URL ?? `http://localhost:${env.PORT}/api`,
+        url: env.PUBLIC_API_URL ?? '/api',
         description: env.PUBLIC_API_URL ? 'Configured gateway' : 'Local development gateway',
       },
     ],
@@ -22,6 +22,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Cases', description: 'Case lifecycle and evidence management endpoints' },
       { name: 'Notifications', description: 'Notification delivery and management endpoints' },
       { name: 'Threats', description: 'Deployment-configured advisory record endpoints' },
+      { name: 'Storage', description: 'Signed object-storage upload targets' },
     ],
     components: {
       securitySchemes: {

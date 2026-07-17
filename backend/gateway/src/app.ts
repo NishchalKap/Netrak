@@ -56,6 +56,7 @@ app.use('/api/auth/forgot-password', createRateLimiter({ windowMs: 60 * 60 * 100
 app.use('/api/auth/refresh', createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 60, message: 'Too many session refresh attempts. Sign in again.' }));
 
 if (env.API_DOCS_ENABLED) {
+  console.log(">>> Swagger enabled:", env.API_DOCS_ENABLED);  
   const documentationCsp = helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
@@ -67,7 +68,8 @@ if (env.API_DOCS_ENABLED) {
     },
   });
   app.use('/api-docs', documentationCsp, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
+
+  console.log(">>> Mounted /api-docs");
 }
 
 app.get('/health', (_req, res) => {

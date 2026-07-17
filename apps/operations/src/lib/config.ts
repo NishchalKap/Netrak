@@ -1,11 +1,12 @@
-const DEFAULT_API_URL = 'http://localhost:3000/api';
-
-export const API_URL = validateApiUrl(import.meta.env.VITE_API_URL || DEFAULT_API_URL);
+export const API_URL = validateApiUrl(import.meta.env.VITE_API_URL);
 export const API_TIMEOUT = boundedInteger(import.meta.env.VITE_API_TIMEOUT, 10_000, 1_000, 60_000);
 export const API_RETRY_ATTEMPTS = boundedInteger(import.meta.env.VITE_API_RETRY_ATTEMPTS, 2, 0, 5);
 export const POLL_INTERVAL = boundedInteger(import.meta.env.VITE_POLL_INTERVAL, 60_000, 15_000, 15 * 60_000);
 
-function validateApiUrl(value: string) {
+function validateApiUrl(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('VITE_API_URL is required. Set it in apps/operations/.env.');
+  }
   let url: URL;
   try {
     url = new URL(value);

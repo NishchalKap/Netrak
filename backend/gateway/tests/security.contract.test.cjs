@@ -13,6 +13,11 @@ const { AuthService } = require('../dist/services/auth.service');
 const { CaseService } = require('../dist/services/case.service');
 const { NotificationService } = require('../dist/services/notification.service');
 const { env } = require('../dist/config/env');
+const { prisma } = require('../dist/database/prisma');
+
+test.after(async () => {
+  await prisma.$disconnect();
+});
 
 test('authentication input is normalized and bounded', () => {
   const result = loginSchema.parse({ email: '  Citizen@Example.com ', password: 'secure-pass' });

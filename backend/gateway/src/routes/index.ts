@@ -4,6 +4,7 @@ import caseRoutes from './case.routes';
 import notificationRoutes from './notification.routes';
 import threatRoutes from './threat.routes';
 import healthRoutes from './health.routes';
+import storageRoutes from './storage.routes';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/auth', authRoutes);
 router.use('/cases', caseRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/threats', threatRoutes);
+router.use('/storage', storageRoutes);
 
 export default router;

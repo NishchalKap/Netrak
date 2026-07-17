@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const DEVELOPMENT_JWT_SECRET = 'netrak-development-only-secret-change-before-release';
+const DEVELOPMENT_REFRESH_TOKEN_SECRET = 'netrak-development-refresh-secret-change-before-release';
 const DEVELOPMENT_DATABASE_URL = 'postgresql://mock:mock@localhost:5432/mockdb';
 const booleanString = z.enum(['true', 'false']).transform((value) => value === 'true');
 const optionalUrl = z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional());
@@ -12,6 +13,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   JWT_SECRET: z.string().min(32).default(DEVELOPMENT_JWT_SECRET),
+  REFRESH_TOKEN_SECRET: z.string().min(32).default(DEVELOPMENT_REFRESH_TOKEN_SECRET),
   JWT_ISSUER: z.string().min(1).default('netrak-gateway'),
   JWT_AUDIENCE: z.string().min(1).default('netrak-clients'),
   JWT_REFRESH_GRACE_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
@@ -42,7 +44,9 @@ const productionErrors: string[] = [];
 
 if (values.NODE_ENV === 'production') {
   if (values.JWT_SECRET === DEVELOPMENT_JWT_SECRET) productionErrors.push('JWT_SECRET must be explicitly configured');
+  if (values.REFRESH_TOKEN_SECRET === DEVELOPMENT_REFRESH_TOKEN_SECRET) productionErrors.push('REFRESH_TOKEN_SECRET must be explicitly configured');
   if (/replace|change|example|development|secret/i.test(values.JWT_SECRET)) productionErrors.push('JWT_SECRET must not contain a known placeholder value');
+  if (/replace|change|example|development|secret/i.test(values.REFRESH_TOKEN_SECRET)) productionErrors.push('REFRESH_TOKEN_SECRET must not contain a known placeholder value');
   if (values.DATABASE_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DATABASE_URL must be explicitly configured');
   if (values.DIRECT_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DIRECT_URL must be explicitly configured');
   if (values.SUPABASE_SERVICE_ROLE_KEY && !values.SUPABASE_URL) productionErrors.push('SUPABASE_URL is required when Supabase Storage credentials are configured');

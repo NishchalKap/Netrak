@@ -1,10 +1,11 @@
-const DEFAULT_API_URL = 'http://localhost:3000/api';
-
-export const API_URL = validateApiUrl(process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL);
+export const API_URL = validateApiUrl(process.env.EXPO_PUBLIC_API_URL);
 export const TIMEOUT = boundedInteger(process.env.EXPO_PUBLIC_API_TIMEOUT, 10_000, 1_000, 60_000);
 export const RETRY_ATTEMPTS = boundedInteger(process.env.EXPO_PUBLIC_API_RETRY_ATTEMPTS, 2, 0, 5);
 
-function validateApiUrl(value: string) {
+function validateApiUrl(value: string | undefined) {
+  if (!value?.trim()) {
+    throw new Error('EXPO_PUBLIC_API_URL is required. Set it in apps/mobile/.env.');
+  }
   let url: URL;
   try {
     url = new URL(value);
