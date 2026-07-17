@@ -4,7 +4,8 @@ import { ZodSchema } from 'zod';
 export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.body = await schema.parseAsync(req.body);
+      const parsed = await schema.parseAsync(req.body);
+      Object.defineProperty(req, 'body', { value: parsed, configurable: true, writable: true });
       next();
     } catch (error) {
       next(error);
@@ -15,7 +16,8 @@ export const validate = (schema: ZodSchema) => {
 export const validateParams = (schema: ZodSchema) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      req.params = await schema.parseAsync(req.params) as typeof req.params;
+      const parsed = await schema.parseAsync(req.params);
+      Object.defineProperty(req, 'params', { value: parsed, configurable: true, writable: true });
       next();
     } catch (error) {
       next(error);
@@ -26,7 +28,8 @@ export const validateParams = (schema: ZodSchema) => {
 export const validateQuery = (schema: ZodSchema) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      req.query = await schema.parseAsync(req.query) as typeof req.query;
+      const parsed = await schema.parseAsync(req.query);
+      Object.defineProperty(req, 'query', { value: parsed, configurable: true, writable: true });
       next();
     } catch (error) {
       next(error);
