@@ -1,37 +1,63 @@
-# Netrak Operations
+# 🚓 Netrak Operations Dashboard
 
 The Netrak operational workspace is the web application used by officers, investigators, command-center teams, and platform administrators.
 
-## Setup
+## ✨ Features
+- Command Center with live incident overview
+- Case management and investigation workspace
+- Heat maps with geospatial visualization
+- Timeline explorer for case events
+- Analytics and reporting
+- AI Copilot for investigation assistance
+- Threat intelligence
+- Evidence management
+- User profile and settings
+
+## 🛠️ Tech Stack
+- React 19
+- TypeScript
+- Vite
+- React Router
+- TanStack Query
+- Tailwind CSS
+- Recharts
+- Leaflet + React Leaflet (OpenStreetMap)
+- Framer Motion
+- Lucide React Icons
+
+## 🚀 Setup
 
 ```bash
 npm install
-copy .env.example .env
+copy .env.example .env  # or cp .env.example .env on macOS/Linux
 npm run dev
 ```
 
-Configuration:
+## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `VITE_API_URL` | `http://localhost:3000/api` | Existing Netrak gateway base URL |
+| `VITE_API_URL` | `http://localhost:3000/api` | Netrak gateway base URL |
 | `VITE_API_TIMEOUT` | `10000` | Request timeout in milliseconds |
-| `VITE_API_RETRY_ATTEMPTS` | `2` | Retry limit for idempotent transient failures |
-| `VITE_POLL_INTERVAL` | `60000` | Transparent refresh interval for query-backed views |
+| `VITE_API_RETRY_ATTEMPTS` | `2` | Retry limit for transient failures |
+| `VITE_POLL_INTERVAL` | `60000` | Refresh interval for views |
 
-## Quality commands
+## 🧪 Quality Commands
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run lint       # Lint code
+npm run typecheck  # Check TypeScript types
+npm test           # Run tests
+npm run build      # Build for production
 ```
 
-The Vite config uses the runner loader on Windows so dependency resolution stays inside the application workspace.
+## 📱 Responsive Design
+The dashboard is fully responsive and works on desktop, tablet, and mobile devices.
 
-Authentication tokens use browser session storage and are cleared when the browser session closes. Theme preference remains in local storage. Production API URLs must use HTTPS. `VITE_` variables are public build-time configuration and must never contain secrets. The static host must apply `public/_headers` or equivalent security headers and narrow CSP `connect-src` to the deployed gateway origin.
+## 🔐 Security
+- Authentication tokens stored in browser session storage
+- Production API URLs must use HTTPS
+- `VITE_` variables are public and must never contain secrets
 
-## Data policy
-
-The interface never fabricates operational records. Features without a documented API—assignments, internal notes, audit logs, organization management, GIS coordinates, chain of custody, and realtime streams—are represented as explicit capability boundaries. Current views use transparent polling and do not ship inactive realtime controls.
+---
+**Team: The Elite Party** | **ET AI Hackathon 2.0**

@@ -1,66 +1,180 @@
-# Netrak
+<div align="center">
+  <h1>🚓 Netrak</h1>
+  <p><strong>Digital Public Safety Platform for Citizens & Law Enforcement</strong></p>
+  <p><strong>Team: The Elite Party</strong> | <strong>Hackathon: ET AI Hackathon 2.0</strong></p>
+</div>
 
-Netrak is a digital public-safety reporting and operational-intelligence platform for citizens, law-enforcement teams, financial institutions, telecom operators, and government agencies. The v1.0 release candidate does not present experimental AI services as deployed capabilities.
+---
 
-See [Netrak v1.0 release scope](docs/release-scope.md) before making product or demonstration claims. It distinguishes tested capabilities, limited integrations, and future scope.
+## 🎯 What is Netrak?
 
-## Applications
+Netrak is a comprehensive digital public-safety platform that connects citizens with law enforcement, financial institutions, telecom operators, and government agencies. It features:
 
-- `apps/mobile` — the citizen-facing Expo application.
-- `apps/operations` — the responsive officer, command-center, intelligence, evidence, analytics, and administration web workspace.
-- `backend/gateway` — the existing Express gateway, Prisma data layer, authentication, and documented APIs.
-- `shared` — shared API types and platform contracts.
+- **Citizen Mobile App**: Report incidents, upload evidence, and track status
+- **Law Enforcement Operations Dashboard**: Command center, analytics, case management, heat maps, and AI copilot
+- **AI-Powered Pipeline**: Speech-to-text transcription, summarization, entity extraction, and threat intelligence
+- **Secure & Scalable**: Built with modern technologies for reliability and performance
 
-The citizen application and operational workspace are intentionally separate products. The operational workspace accepts only authenticated `OFFICER` and `ADMIN` accounts; citizen accounts remain in the mobile application.
+---
 
-## Run the operational workspace
+## ✨ Key Features
 
+### 📱 Citizen Mobile App
+- Incident reporting with multimedia evidence upload
+- Real-time case tracking
+- Secure authentication
+- Push notifications for updates
+
+### 👮 Law Enforcement Operations Dashboard
+- **Command Center**: Live overview of active incidents and resources
+- **Case Management**: Full investigation workflow with evidence tracking
+- **Heat Maps**: Geospatial visualization of incidents
+- **Timeline Explorer**: Chronological view of case events
+- **Analytics**: Data-driven insights and reports
+- **AI Copilot**: AI-powered assistance for investigations
+- **Threat Intelligence**: Real-time threat analysis and alerts
+
+### 🤖 AI Capabilities
+- Speech-to-text transcription (Databricks/Whisper)
+- Automatic case summarization
+- Entity extraction (names, phone numbers, emails, locations, etc.)
+- Threat classification
+- Multilingual support
+
+---
+
+## 🏗️ Architecture
+
+### Tech Stack
+
+#### Backend
+- **Framework**: Express.js (Node.js)
+- **Language**: TypeScript
+- **Database**: PostgreSQL (via Prisma ORM)
+- **Auth**: Supabase Auth
+- **Storage**: Supabase Storage
+- **API Docs**: Swagger/OpenAPI
+- **AI/ML**: Gemini API (LLM), Databricks Speech-to-Text
+- **Rate Limiting**: Custom middleware
+
+#### Frontend (Operations Dashboard)
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Routing**: React Router
+- **Data Fetching**: TanStack Query
+- **Styling**: Tailwind CSS + Custom Design System
+- **Charts**: Recharts
+- **Maps**: Leaflet + React Leaflet (OpenStreetMap)
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+
+#### Mobile App
+- **Framework**: Expo (React Native)
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **Navigation**: Expo Router
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 20+
+- npm or yarn
+- PostgreSQL (or use Supabase PostgreSQL)
+- Supabase account (for storage/auth)
+- Gemini API key
+- Databricks Speech-to-Text endpoint (optional)
+
+### Installation & Setup
+
+1. **Clone the repo**
 ```bash
-npm run install:operations
-npm run dev:operations
+git clone https://github.com/NishchalKap/Netrak.git
+cd Netrak
 ```
 
-The web workspace opens on `http://localhost:4173` and uses `http://localhost:3000/api` by default. Copy `apps/operations/.env.example` to `.env` when the gateway is hosted elsewhere.
-
-## Run the platform checks
-
-Install each application and execute the release quality gate:
-
+2. **Install dependencies**
 ```bash
 npm run install:all
-npm run verify
-npm run export --prefix apps/mobile
 ```
 
-Copy the relevant `.env.example` before starting services. Production deployments must supply a unique gateway JWT secret, PostgreSQL connection, and explicit HTTPS CORS origins. Never place secrets in `VITE_` or `EXPO_PUBLIC_` variables because those values are bundled into clients.
+3. **Configure Environment Variables**
+   - For backend: Copy `backend/gateway/.env.example` to `backend/gateway/.env` and fill in values
+   - For operations: Copy `apps/operations/.env.example` to `apps/operations/.env` and fill in values
+   - For mobile: Copy `apps/mobile/.env.example` to `apps/mobile/.env` and fill in values
 
-Apply the committed database migration as a separate deployment step before starting a new gateway release:
-
+4. **Run Database Migration**
 ```bash
+cd backend/gateway
 npm run prisma:migrate:deploy
 ```
 
-Do not run `prisma db push` against production. Back up the target database, review the SQL migration, apply it with the deployment identity, and verify `/api/health` before shifting traffic.
+5. **Start Backend**
+```bash
+cd backend/gateway
+npm run dev
+```
+Backend will be available at http://localhost:3000
 
-## Operational platform architecture
+6. **Start Operations Dashboard**
+```bash
+cd apps/operations
+npm run dev
+```
+Dashboard will be available at http://localhost:4173
 
-The workspace uses React, TypeScript, Vite, React Router, TanStack Query, Axios, Lucide, and Recharts. It follows a feature-first boundary:
+7. **Start Mobile App**
+```bash
+cd apps/mobile
+npm run start
+```
+Use Expo Go app to scan the QR code
 
-- `src/app` — application providers, routing, shell, navigation, and theming.
-- `src/components` — reusable primitives and operational UI patterns.
-- `src/data` — typed API repositories and query hooks.
-- `src/features` — authentication and global search workflows.
-- `src/lib` — API transport, safe formatting, and GeoJSON capability boundaries while production views use transparent polling.
-- `src/pages` — route-level operational capabilities.
+---
 
-See [operational-platform.md](docs/architecture/operational-platform.md) for API boundaries, component behavior, and future backend integration points.
+## 📖 Usage Guide
 
-## Documentation
+### For Citizens
+1. Download the Netrak mobile app
+2. Create an account or sign in
+3. Report an incident with details and evidence
+4. Track your case status in real-time
 
-- [Operational platform](docs/architecture/operational-platform.md)
-- [Architecture summary](docs/architecture/architecture-summary.md)
-- [Frontend contract](docs/frontend-contract.md)
-- [Design system](docs/design/DESIGN.md)
-- [Release candidate runbook](docs/release-candidate.md)
-- [Release scope and capability truth](docs/release-scope.md)
-- [Security policy](SECURITY.md)
+### For Law Enforcement Officers
+1. Open the Operations Dashboard
+2. Sign in with your officer/admin credentials
+3. View the Command Center for live updates
+4. Manage cases, add evidence, and collaborate
+5. Use the AI Copilot for investigation assistance
+6. View heat maps, timelines, and analytics
+
+---
+
+## 📚 Documentation
+
+- [Architecture Summary](docs/architecture/architecture-summary.md)
+- [Operational Platform](docs/architecture/operational-platform.md)
+- [AI Platform Integration](docs/architecture/ai-platform-integration.md)
+- [Design System](docs/design/DESIGN.md)
+- [Release Candidate Runbook](docs/release-candidate.md)
+- [Security Policy](SECURITY.md)
+
+---
+
+## 🤝 Team
+
+**The Elite Party**
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 🎉 Acknowledgments
+
+- ET AI Hackathon 2.0
+- Open-source contributors

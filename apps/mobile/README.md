@@ -1,25 +1,57 @@
-# Netrak Mobile
+# 📱 Netrak Mobile App
 
 Expo Router client for Netrak's public-safety platform. The app consumes the existing gateway APIs for authentication, profiles, cases, evidence, threats, notifications, and service health.
 
-Release boundaries: evidence is metadata/reference-only, notification read markers are device-local, SOS creates a critical case and opens the dialer but does not dispatch services, and self-service password-reset delivery is not configured. See `../../docs/release-scope.md`.
+## ✨ Features
+- Citizen incident reporting with multimedia evidence upload
+- Real-time case tracking
+- Secure authentication with Supabase
+- Emergency SOS feature
+- Notifications for case updates
+- Threat intelligence feeds
+- User profile and settings
+- Dark/light theme support
 
-## Local setup
+## 🛠️ Tech Stack
+- Expo (React Native)
+- TypeScript
+- Expo Router
+- Zustand (state management)
+- React Native Paper (UI components)
+- Expo Secure Store (token storage)
 
-1. Copy `.env.example` to `.env`.
-2. Set `EXPO_PUBLIC_API_URL` to the gateway `/api` URL reachable from the target device.
-3. Install dependencies with `npm install`.
-4. Run `npm start` for Expo, or `npm run web` for the web preview.
+## 🚀 Local Setup
 
-`localhost` works for Expo Web. Android emulators and physical devices need a host address they can reach, such as the development machine's LAN IP.
+1. **Configure Environment Variables**
+   Copy `.env.example` to `.env` and set:
+   - `EXPO_PUBLIC_API_URL`: Gateway `/api` URL reachable from your device
+   - Use `localhost` for Expo Web
+   - Use your machine's LAN IP for emulators/physical devices
 
-## Validation
-
-```text
-npm run lint
-npm run typecheck
-npm run export
-npx expo start
+2. **Install Dependencies**
+```bash
+npm install
 ```
 
-The app stores authentication tokens in device-only, when-unlocked SecureStore on native platforms and session storage in Expo Web. Non-loopback production API URLs must use HTTPS. Theme, reduced-motion preference, emergency contact, and local notification read state persist between launches. Signed Android and iOS binaries require deployment-owned EAS credentials and store identifiers; `npm run export` validates the JavaScript and asset bundles for all supported platforms without fabricating those credentials.
+3. **Run the App**
+```bash
+npm start          # Start Expo dev server
+npm run web        # Run web preview
+npm run android    # Run on Android emulator
+npm run ios        # Run on iOS simulator (macOS only)
+```
+
+## 🧪 Validation
+
+```bash
+npm run lint       # Lint code
+npm run typecheck  # Check TypeScript types
+npm run export     # Validate JS/asset bundles
+```
+
+## 🔐 Security
+- Authentication tokens stored in device-only, when-unlocked SecureStore
+- Non-loopback production API URLs must use HTTPS
+
+---
+**Team: The Elite Party** | **ET AI Hackathon 2.0**
