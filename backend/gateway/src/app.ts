@@ -77,26 +77,11 @@ app.get('/health', (_req, res) => {
 });
 
 // Redirect root to frontend
-app.get('/', (_req, res) => {
+app.get('/', (req, res) => {
   const frontendUrl = process.env.NODE_ENV === 'production' 
     ? (process.env.PUBLIC_FRONTEND_URL || 'http://localhost:4173')
     : 'http://localhost:4173';
   res.redirect(frontendUrl);
-});
-
-// Handle Supabase email verification redirects (hash-based) by redirecting to frontend with the hash
-app.get('*', (req, res, next) => {
-  // Check if this looks like a Supabase auth redirect (has hash with access_token)
-  // Since we can't access the hash on the server, just redirect to frontend and let it handle it
-  if (!req.path.startsWith('/api') && !req.path.startsWith('/api-docs')) {
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-      ? (process.env.PUBLIC_FRONTEND_URL || 'http://localhost:4173')
-      : 'http://localhost:4173';
-    // Preserve the full original URL (including hash if any, though server can't see hash)
-    // So just redirect to frontend root and let frontend handle any client-side routing
-    return res.redirect(frontendUrl);
-  }
-  next();
 });
 
 app.use('/api', apiRoutes);
