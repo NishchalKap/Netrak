@@ -202,7 +202,7 @@ export function InvestigationWorkspace() {
                   <p>Ask questions about this case</p>
                   <div className="flex flex-wrap gap-2 mt-4 justify-center">
                     {['Summarize this case', 'What evidence is missing?', 'What are the main suspects?', 'What locations are mentioned?', 'What should I investigate next?'].map((suggestion, i) => (
-                      <Button key={i} variant="secondary" size="sm" onClick={() => handleSuggestion(suggestion)}>
+                      <Button key={i} variant="secondary" onClick={() => handleSuggestion(suggestion)}>
                         {suggestion}
                       </Button>
                     ))}
@@ -222,7 +222,7 @@ export function InvestigationWorkspace() {
               )}
             </div>
             <div className="copilot-input flex gap-2 mt-4">
-              <Field>
+              <Field label="Officer question">
                 <input
                   type="text"
                   value={copilotInput}

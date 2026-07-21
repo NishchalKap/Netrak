@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { API_URL } from '@/lib/config';
 
 export interface TranscriptionRequest {
   file: File;
@@ -25,9 +26,8 @@ async function transcribeAudio(data: TranscriptionRequest): Promise<Transcriptio
 
   // Fallback to fetch if api client doesn't support FormData well
   const token = localStorage.getItem('access_token');
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
   
-  const response = await fetch(`${baseUrl}/ai/speech/transcribe`, {
+  const response = await fetch(`${API_URL}/ai/speech/transcribe`, {
     method: 'POST',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {})

@@ -22,7 +22,7 @@ export class CaseService {
     return caseItem;
   }
 
-  async createCase(data: CreateCaseDto, userId: string, options?: { audioBuffer?: Buffer; audioMimeType?: string } = {}) {
+  async createCase(data: CreateCaseDto, userId: string, options: { audioBuffer?: Buffer; audioMimeType?: string } = {}) {
     const newCase = await this.caseRepository.create({ ...data, userId });
 
     // Run AI pipeline asynchronously (don't wait for it to complete before returning)

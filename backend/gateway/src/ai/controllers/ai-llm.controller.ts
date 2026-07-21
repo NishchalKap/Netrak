@@ -74,7 +74,6 @@ const EntitiesRequestSchema = z.object({
 export const chat = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validated = ChatRequestSchema.parse(req.body);
-    let systemPrompt = '';
     let context = '';
 
     if (validated.caseId) {

@@ -4,12 +4,7 @@ import { ZodSchema } from 'zod';
 export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Parse JSON or form-data
-      let data = req.body;
-      
-      // If it's form-data and has some fields that need to be JSON parsed, but mostly for primitives
-      // For this case, we just pass it through, but zod can handle strings that need to be coerced
-      const parsed = await schema.parseAsync(data);
+      const parsed = await schema.parseAsync(req.body);
       Object.defineProperty(req, 'body', { value: parsed, configurable: true, writable: true });
       next();
     } catch (error) {

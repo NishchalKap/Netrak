@@ -3,6 +3,17 @@ import { prisma } from '../../database/prisma';
 import { logger } from '../../common/logger';
 
 export class AiPipelineService {
+  private formatTranscriptions(transcriptions: unknown): string {
+    if (!Array.isArray(transcriptions) || transcriptions.length === 0) {
+      return 'None';
+    }
+
+    return (transcriptions as Array<{ text?: string }>)
+      .map((transcription) => `- ${transcription.text ?? ''}`.trim())
+      .filter((line) => line !== '-')
+      .join('\n') || 'None';
+  }
+
   /**
    * Runs the full AI pipeline for a case:
    * 1. If audioBuffer is provided: transcribe audio
@@ -75,7 +86,7 @@ Evidence:
 ${caseContext.evidence.map(e => `- ${e.type}: ${e.label} (${e.reference})`).join('\n')}
 
 Transcriptions:
-${caseContext.transcriptions.map(t => `- ${t.text}`).join('\n') || 'None'}`;
+${this.formatTranscriptions(caseContext.transcriptions)}`;
 
         const prompt = `Please summarize this police investigation case. Provide the following sections:
 1. Executive Summary
@@ -134,7 +145,7 @@ Evidence:
 ${caseContext.evidence.map(e => `- ${e.label}: ${e.notes || ''}`).join('\n')}
 
 Transcriptions:
-${caseContext.transcriptions.map(t => `- ${t.text}`).join('\n') || 'None'}`;
+${this.formatTranscriptions(caseContext.transcriptions)}`;
 
         const prompt = `Extract the following entities from this case data. Return only a JSON array of objects with "type" and "value" fields, no other text.
 

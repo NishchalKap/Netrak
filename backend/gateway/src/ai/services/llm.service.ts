@@ -6,32 +6,23 @@ import { logger } from '../../common/logger';
 export class LLMService {
   async generate(request: LLMRequest, inputRef?: string): Promise<LLMResponse> {
     const provider = aiRegistry.getLLMProvider();
-    const startTime = Date.now();
-    let result: LLMResponse | null = null;
-    let errorStr: string | null = null;
+    const result = await provider.generate(request);
 
+    // Try to save to AIResult
     try {
-      result = await provider.generate(request);
-
-      // Try to save to AIResult
-      try {
-        await prisma.aIResult.create({
-          data: {
-            provider: provider.name,
-            serviceType: 'llm',
-            inputRef,
-            output: JSON.parse(JSON.stringify(result))
-          }
-        });
-      } catch (dbErr) {
-        logger.warn('Failed to save AIResult', { dbErr });
-      }
-
-      return result;
-    } catch (error: any) {
-      errorStr = error.message;
-      throw error;
+      await prisma.aIResult.create({
+        data: {
+          provider: provider.name,
+          serviceType: 'llm',
+          inputRef,
+          output: JSON.parse(JSON.stringify(result))
+        }
+      });
+    } catch (dbErr) {
+      logger.warn('Failed to save AIResult', { dbErr });
     }
+
+    return result;
   }
 }
 

@@ -1,5 +1,5 @@
 import { aiRegistry } from '../providers/registry';
-import { TranscriptionRequest, TranscriptionResponse } from '../interfaces/speech-provider.interface';
+import { TranscriptionResponse } from '../interfaces/speech-provider.interface';
 import { prisma } from '../../database/prisma';
 import { logger } from '../../common/logger';
 
@@ -14,11 +14,9 @@ export class SpeechService {
     const provider = aiRegistry.getSpeechProvider();
     
     const startTime = Date.now();
-    let result: TranscriptionResponse | null = null;
-    let errorStr: string | null = null;
 
     try {
-      result = await provider.transcribe({
+      const result = await provider.transcribe({
         audioBuffer,
         mimetype,
         language,
@@ -57,9 +55,9 @@ export class SpeechService {
       }
 
       return result;
-    } catch (error: any) {
-      errorStr = error.message;
-      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
       // Save failure history (try/catch to not fail the whole request)
       try {
         await prisma.aIInferenceHistory.create({
@@ -68,7 +66,7 @@ export class SpeechService {
             serviceType: 'speech_to_text',
             status: 'ERROR',
             durationMs: Date.now() - startTime,
-            error: errorStr
+            error: errorMessage
           }
         });
       } catch (dbErr) {

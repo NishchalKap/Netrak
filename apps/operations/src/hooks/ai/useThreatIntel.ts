@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { API_URL } from '@/lib/config';
 
 export interface ThreatClassificationRequest {
   text: string;
@@ -14,9 +15,8 @@ export interface ThreatClassificationResponse {
 
 async function classifyThreat(data: ThreatClassificationRequest): Promise<ThreatClassificationResponse> {
   const token = localStorage.getItem('access_token');
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
   
-  const response = await fetch(`${baseUrl}/ai/threat/classify`, {
+  const response = await fetch(`${API_URL}/ai/threat/classify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
