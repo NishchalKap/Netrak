@@ -20,6 +20,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1).default(DEVELOPMENT_DATABASE_URL),
   DIRECT_URL: z.string().min(1).default(DEVELOPMENT_DATABASE_URL),
   SUPABASE_URL: optionalUrl,
+  SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   SUPABASE_STORAGE_BUCKET: z.string().trim().min(3).max(63).regex(/^[a-z0-9][a-z0-9._-]*[a-z0-9]$/).optional(),
   CORS_ORIGINS: z.string().default('http://localhost:8081,http://localhost:4173'),
@@ -30,6 +31,11 @@ const envSchema = z.object({
   ALLOW_PRIVILEGED_REGISTRATION: booleanString.default(false),
   ALLOW_LEGACY_PASSWORD_MIGRATION: booleanString.default(false),
   LOAD_REFERENCE_ADVISORIES: booleanString.optional(),
+  
+  // AI Configuration
+  AI_SPEECH_PROVIDER: z.string().default('databricks'),
+  DATABRICKS_SPEECH_URL: optionalUrl,
+  DATABRICKS_API_KEY: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -50,6 +56,10 @@ if (values.NODE_ENV === 'production') {
   if (values.DATABASE_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DATABASE_URL must be explicitly configured');
   if (values.DIRECT_URL === DEVELOPMENT_DATABASE_URL) productionErrors.push('DIRECT_URL must be explicitly configured');
   if (values.SUPABASE_SERVICE_ROLE_KEY && !values.SUPABASE_URL) productionErrors.push('SUPABASE_URL is required when Supabase Storage credentials are configured');
+  const suppliedSupabaseValues = [values.SUPABASE_URL, values.SUPABASE_ANON_KEY, values.SUPABASE_SERVICE_ROLE_KEY];
+  if (suppliedSupabaseValues.some(Boolean) && suppliedSupabaseValues.some((value) => !value)) {
+    productionErrors.push('SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY must be configured together');
+  }
   for (const suppliedOrigin of values.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)) {
     if (suppliedOrigin === '*') {
       productionErrors.push('CORS_ORIGINS cannot contain a wildcard');
@@ -65,6 +75,9 @@ if (values.NODE_ENV === 'production') {
   }
   if (values.PUBLIC_API_URL && new URL(values.PUBLIC_API_URL).protocol !== 'https:') productionErrors.push('PUBLIC_API_URL must use HTTPS in production');
   if (values.ALLOW_LEGACY_PASSWORD_MIGRATION) productionErrors.push('ALLOW_LEGACY_PASSWORD_MIGRATION must be false in production');
+  if (values.AI_SPEECH_PROVIDER === 'databricks' && (!values.DATABRICKS_SPEECH_URL || !values.DATABRICKS_API_KEY)) {
+    productionErrors.push('DATABRICKS_SPEECH_URL and DATABRICKS_API_KEY must be configured when AI_SPEECH_PROVIDER is databricks');
+  }
 }
 
 if (productionErrors.length) {
