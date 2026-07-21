@@ -78,7 +78,10 @@ export function LoginPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#00E5FF]/10 blur-[100px] rounded-full pointer-events-none" />
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.1 }} className="w-full max-w-md relative z-10">
         <div className="glass-panel-heavy p-8 md:p-10 rounded-2xl">
-          <div className="flex gap-2 p-1 rounded-lg bg-black/30 border border-white/[0.06] mb-8"><button type="button" onClick={() => chooseMode('sign-in')} className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${!isRegistering ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>Operations sign in</button><button type="button" onClick={() => chooseMode('register')} className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${isRegistering ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>Create citizen account</button></div>
+          <div className="flex gap-2 p-1 rounded-lg bg-black/30 border border-white/[0.06] mb-8">
+            <button type="button" onClick={() => chooseMode('sign-in')} className={`flex-1 rounded-md px-3 py-2.5 text-sm font-semibold transition-all ${!isRegistering ? 'bg-[#00E5FF] text-[#001A1F]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Sign In</button>
+            <button type="button" onClick={() => chooseMode('register')} className={`flex-1 rounded-md px-3 py-2.5 text-sm font-semibold transition-all ${isRegistering ? 'bg-[#00E5FF] text-[#001A1F]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Sign Up</button>
+          </div>
           <div className="w-14 h-14 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] mb-7 shadow-[0_0_15px_rgba(0,229,255,0.15)]">{isRegistering ? <Smartphone size={24} /> : <LockKeyhole size={24} />}</div>
           <h2 className="text-2xl font-bold mb-2">{isRegistering ? 'Create a citizen account' : 'Sign in to Operations'}</h2>
           <p className="text-gray-400 text-sm mb-8">{isRegistering ? 'This account is for Netrak Mobile. Officer and administrator access cannot be self-created here.' : 'Use the officer or administrator credentials issued by your deployment administrator.'}</p>
