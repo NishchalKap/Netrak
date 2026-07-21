@@ -86,7 +86,7 @@ Netrak is a comprehensive digital public-safety platform that connects citizens 
 - Gemini API key
 - Databricks Speech-to-Text endpoint (optional)
 
-### Installation & Setup
+### Local Installation & Setup
 
 1. **Clone the repo**
 ```bash
@@ -104,10 +104,11 @@ npm run install:all
    - For operations: Copy `apps/operations/.env.example` to `apps/operations/.env` and fill in values
    - For mobile: Copy `apps/mobile/.env.example` to `apps/mobile/.env` and fill in values
 
-4. **Run Database Migration**
+4. **Run Database Migration & Seed**
 ```bash
 cd backend/gateway
 npm run prisma:migrate:deploy
+npm run prisma:seed
 ```
 
 5. **Start Backend**
@@ -130,6 +131,29 @@ cd apps/mobile
 npm run start
 ```
 Use Expo Go app to scan the QR code
+
+## 🌐 Deploying to Vercel
+
+### Deploy Operations Dashboard (Frontend)
+1. Connect your GitHub repo to Vercel
+2. Set the **Root Directory** to `apps/operations`
+3. Configure environment variables in Vercel (copy from `apps/operations/.env.example`)
+4. Deploy!
+
+### Deploy Backend
+The backend is best deployed on a Node.js hosting platform (e.g., Railway, Render, AWS, etc.)
+- Set environment variables from `backend/gateway/.env.example`
+- Run database migrations before starting the server
+- Seed the database for demo credentials
+
+## 🔐 Demo Login Credentials
+These are created when you run `npm run prisma:seed`:
+
+| Role      | Email                  | Password             |
+|-----------|------------------------|----------------------|
+| Admin     | admin@netrak.local     | NetrakAdmin!2026     |
+| Officer   | officer@netrak.local   | NetrakOfficer!2026   |
+| Citizen   | citizen@netrak.local   | NetrakCitizen!2026   |
 
 ---
 
