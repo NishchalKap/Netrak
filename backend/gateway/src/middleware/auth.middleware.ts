@@ -1,33 +1,49 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import { env } from '../config/env';
 import { AppError } from '../common/AppError';
+import { supabaseAdmin } from '../config/supabase';
+import { prisma } from '../database/prisma';
+
+export type UserRole = 'CITIZEN' | 'OFFICER' | 'ADMIN';
+export interface AuthenticatedUser { id: string; role: UserRole; email: string }
 
 export interface AuthRequest extends Request {
   user?: AuthenticatedUser;
 }
 
-export type UserRole = 'CITIZEN' | 'OFFICER' | 'ADMIN';
-export interface AuthenticatedUser { id: string; role: UserRole }
 const USER_ROLES: UserRole[] = ['CITIZEN', 'OFFICER', 'ADMIN'];
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const [scheme, token] = authHeader?.split(' ') ?? [];
+  
   if (scheme !== 'Bearer' || !token) {
     return next(new AppError('Authentication is required', 401));
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET, {
-      algorithms: ['HS256'],
-      issuer: env.JWT_ISSUER,
-      audience: env.JWT_AUDIENCE,
-    }) as JwtPayload;
-    if (typeof decoded.id !== 'string' || decoded.sub !== decoded.id || !USER_ROLES.includes(decoded.role as UserRole)) {
+    // Verify token using Supabase admin client
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    
+    if (error || !data.user) {
       return next(new AppError('Invalid authentication token', 401));
     }
-    req.user = { id: decoded.id, role: decoded.role as UserRole };
+
+    // Fetch user from Prisma to get application role
+    const dbUser = await prisma.user.findUnique({
+      where: { id: data.user.id },
+      select: { id: true, role: true, email: true }
+    });
+
+    if (!dbUser || !USER_ROLES.includes(dbUser.role as UserRole)) {
+      return next(new AppError('Invalid user or role', 401));
+    }
+
+    req.user = { 
+      id: dbUser.id, 
+      role: dbUser.role as UserRole, 
+      email: dbUser.email 
+    };
+    
     next();
   } catch {
     return next(new AppError('Authentication has expired or is invalid', 401));

@@ -2,6 +2,7 @@ import { CaseRepository } from '../repositories/case.repository';
 import { CaseListQueryDto, CreateCaseDto, UpdateCaseDto } from '../dto/case.dto';
 import { AppError } from '../common/AppError';
 import { AuthenticatedUser } from '../middleware/auth.middleware';
+import { aiPipelineService } from '../ai/services/aiPipeline.service';
 
 export class CaseService {
   private caseRepository: CaseRepository;
@@ -21,8 +22,16 @@ export class CaseService {
     return caseItem;
   }
 
-  async createCase(data: CreateCaseDto, userId: string) {
-    return this.caseRepository.create({ ...data, userId });
+  async createCase(data: CreateCaseDto, userId: string, options?: { audioBuffer?: Buffer; audioMimeType?: string } = {}) {
+    const newCase = await this.caseRepository.create({ ...data, userId });
+
+    // Run AI pipeline asynchronously (don't wait for it to complete before returning)
+    // This ensures case creation never fails because of AI
+    aiPipelineService.runPipelineForCase(newCase.id, options).catch((error) => {
+      console.error('AI pipeline failed for case:', newCase.id, error);
+    });
+
+    return newCase;
   }
 
   async updateCase(id: string, data: UpdateCaseDto, actor: AuthenticatedUser) {

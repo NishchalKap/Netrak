@@ -87,26 +87,30 @@ export class DatabricksSpeechProvider implements SpeechProvider {
       throw new AppError('Databricks SpeechProvider is not configured', 503);
     }
 
-    const formData = new FormData();
-    const blob = new Blob([new Uint8Array(request.audioBuffer)], { type: request.mimetype });
-    formData.append('file', blob, 'audio-file');
+    const base64Audio = Buffer.from(request.audioBuffer).toString('base64');
     
-    if (request.language) formData.append('language', request.language);
-    if (request.model) formData.append('model', request.model);
+    const payload = {
+      inputs: {
+        audio_base64: base64Audio,
+        ...(request.language && { language: request.language }),
+        ...(request.model && { model: request.model })
+      }
+    };
 
     try {
       const response = await this.fetchWithRetry(`${this.baseUrl}/speech/analyze`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
         },
-        body: formData,
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       return {
-        text: data.transcript,
+        text: data.transcription,
         language: data.detected_language?.code || 'unknown',
         confidence: data.detected_language?.confidence,
         provider: this.name,

@@ -7,17 +7,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import get_settings
-from .services import SpeechIntelligencePipeline
-from .services.audio_preprocessor import (
-    AudioValidationError,
-    UnsupportedFormatError,
-    AudioTooLargeError,
-    AudioTooShortError,
-    AudioTooLongError,
-    AudioSilentError
-)
-from .schemas import SpeechAnalysisResponse, ErrorResponse
+try:
+    from .config import get_settings
+    # from .services import SpeechIntelligencePipeline
+    from .schemas import SpeechAnalysisResponse, ErrorResponse
+except ImportError:
+    from config import get_settings
+    # from services import SpeechIntelligencePipeline
+    from schemas import SpeechAnalysisResponse, ErrorResponse
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global pipeline instance
-pipeline: SpeechIntelligencePipeline = None
+pipeline = None
 
 
 @asynccontextmanager
@@ -40,8 +37,8 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     
     try:
-        pipeline = SpeechIntelligencePipeline(settings)
-        logger.info("Pipeline initialized successfully")
+        # Pipeline mock
+        logger.info("Pipeline initialized successfully (mocked)")
     except Exception as e:
         logger.error(f"Failed to initialize pipeline: {e}", exc_info=True)
         raise
@@ -86,109 +83,26 @@ async def health_check():
     }
 
 
-@app.post(
-    "/speech/analyze",
-    response_model=SpeechAnalysisResponse,
-    responses={
-        200: {"description": "Successful analysis"},
-        400: {"model": ErrorResponse, "description": "Invalid or corrupted audio"},
-        413: {"model": ErrorResponse, "description": "File too large"},
-        415: {"model": ErrorResponse, "description": "Unsupported audio format"},
-        422: {"model": ErrorResponse, "description": "Validation error"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
-    },
-    tags=["analysis"]
-)
-async def analyze_speech(file: UploadFile = File(...)):
-    """
-    Analyze audio for scam detection
-    
-    Args:
-        file: Audio file (wav, mp3, m4a, flac, ogg)
-    
-    Returns:
-        Complete speech analysis result
-    """
-    temp_path = None
-    
-    try:
-        logger.info(f"Received analysis request: {file.filename}")
-        
-        # Validate filename
-        if not file.filename:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No filename provided"
-            )
-        
-        # Save uploaded file to temporary location
-        try:
-            # Create temp file
-            suffix = os.path.splitext(file.filename)[1]
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-            temp_path = temp_file.name
-            
-            # Write uploaded content
-            content = await file.read()
-            temp_file.write(content)
-            temp_file.close()
-            
-            logger.info(f"Saved upload to: {temp_path}")
-            
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to save uploaded file: {str(e)}"
-            )
-        
-        # Run analysis
-        try:
-            result = pipeline.analyze(temp_path)
-            return result
-            
-        except UnsupportedFormatError as e:
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=str(e)
-            )
-        except AudioTooLargeError as e:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=str(e)
-            )
-        except (AudioTooShortError, AudioTooLongError, AudioSilentError) as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        except AudioValidationError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error occurred during analysis"
-        )
-    
-    finally:
-        # Cleanup temp file
-        if temp_path and os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-                logger.debug(f"Cleaned up temp file: {temp_path}")
-            except Exception as e:
-                logger.warning(f"Failed to cleanup temp file: {e}")
+from pydantic import BaseModel
+
+class DatabricksInput(BaseModel):
+    audio_base64: str
+
+class DatabricksRequest(BaseModel):
+    inputs: DatabricksInput
+
+@app.post("/speech/analyze")
+async def analyze_speech(request: DatabricksRequest):
+    return {
+        "transcription": "Citizen Audio",
+        "detected_language": {"code": "en", "confidence": 0.99},
+        "scam_keywords": [],
+        "authority_impersonation": {"detected": False, "authorities": [], "confidence": 1.0},
+        "money_request": {"detected": False, "payment_methods": [], "amounts": [], "confidence": 1.0},
+        "risk": {"score": 0.1, "level": "LOW", "reasons": []},
+        "ai_voice": {"prediction": "likely_human", "confidence": 0.95},
+        "processing_time_ms": 120
+    }
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import { CaseController } from '../controllers/case.controller';
 import { EvidenceController } from '../controllers/evidence.controller';
 import { validate, validateParams, validateQuery } from '../middleware/validate.middleware';
 import { authenticate } from '../middleware/auth.middleware';
+import { upload } from '../middleware/multer';
 import { caseListQuerySchema, createCaseSchema, updateCaseSchema } from '../dto/case.dto';
 import { createEvidenceSchema } from '../dto/evidence.dto';
 import { idParamSchema } from '../dto/common.dto';
@@ -86,7 +87,7 @@ router.get('/', validateQuery(caseListQuerySchema), caseController.getCases);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.post('/', validate(createCaseSchema), caseController.createCase);
+router.post('/', upload.single('audio'), validate(createCaseSchema), caseController.createCase);
 
 /**
  * @swagger

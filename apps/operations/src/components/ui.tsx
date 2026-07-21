@@ -39,8 +39,8 @@ export function SearchField(props: InputHTMLAttributes<HTMLInputElement>) {
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return <label className="field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>;
 }
-export function SectionHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
-  return <div className="section-header"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{action}</div>;
+export function SectionHeader({ title, description, action, icon }: { title: string; description?: string; action?: ReactNode; icon?: ReactNode }) {
+  return <div className="section-header"><div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{icon}<div><h2>{title}</h2>{description && <p>{description}</p>}</div></div>{action}</div>;
 }
 export function CapabilityNotice({ title, children }: { title: string; children: ReactNode }) {
   return <div className="capability-notice"><AlertTriangle size={18} /><div><strong>{title}</strong><p>{children}</p></div></div>;

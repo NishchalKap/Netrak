@@ -12,7 +12,7 @@ export class UserRepository {
     });
   }
 
-  async create(data: { email: string; password: string; role?: string }) {
+  async create(data: { id?: string; email: string; password: string; role?: string }) {
     return prisma.user.create({ data });
   }
 

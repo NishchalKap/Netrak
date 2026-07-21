@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Bell, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleUserRound, Command, Database, FileClock, FileSearch, LayoutDashboard, Map, Menu, Moon, Search, Settings, ShieldCheck, Sun, X } from 'lucide-react';
+import { Activity, BarChart3, Bell, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleUserRound, Command, Database, FileClock, FileSearch, LayoutDashboard, Map, Menu, Moon, Search, Settings, Sun, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button, Badge } from '@/components/ui';
@@ -6,6 +6,7 @@ import { useNotifications } from '@/data/queries';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/features/auth/AuthContext';
+import { BrandLogo } from '@/components/BrandLogo';
 import { GlobalSearch } from '@/features/search/GlobalSearch';
 
 const primaryNav = [
@@ -40,7 +41,7 @@ export function AppShell() {
   return <div className={`app-shell ${collapsed ? 'app-shell--collapsed' : ''}`}>
     {!online && <div className="offline-banner">Offline. Cached threat intelligence remains available; changes will require a connection.</div>}
     <aside className={`sidebar ${mobileOpen ? 'sidebar--open' : ''}`}>
-      <header><NavLink to="/" className="brand-lockup"><span className="brand-mark"><ShieldCheck /></span><strong>NETRAK</strong></NavLink><Button variant="ghost" className="mobile-only" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></Button></header>
+      <header><NavLink to="/dashboard" style={{ textDecoration: 'none' }}><BrandLogo /></NavLink><Button variant="ghost" className="mobile-only" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></Button></header>
       <button className="sidebar-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search operations</span><kbd>Ctrl K</kbd></button>
       <nav aria-label="Primary navigation">{primaryNav.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setMobileOpen(false)}><Icon size={18} /><span>{label}</span></NavLink>)}</nav>
       <nav className="sidebar__secondary" aria-label="Account navigation"><NavLink to="/notifications" onClick={() => setMobileOpen(false)}><Bell size={18} /><span>Notifications</span>{unread > 0 && <Badge tone="accent">{unread}</Badge>}</NavLink><NavLink to="/profile" onClick={() => setMobileOpen(false)}><CircleUserRound size={18} /><span>Profile</span></NavLink>{user?.role === 'ADMIN' && <NavLink to="/admin" onClick={() => setMobileOpen(false)}><Settings size={18} /><span>Administration</span></NavLink>}</nav>

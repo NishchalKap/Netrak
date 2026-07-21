@@ -3,6 +3,7 @@ import type { AuthResponse, CaseRecord, CaseStatus, Evidence, EvidenceType, Heal
 
 export const authRepository = {
   login: (email: string, password: string) => api.post<AuthResponse, { email: string; password: string }>('/auth/login', { email, password }),
+  registerCitizen: (email: string, password: string) => api.post<AuthResponse, { email: string; password: string; role: 'CITIZEN' }>('/auth/register', { email, password, role: 'CITIZEN' }),
   profile: (signal?: AbortSignal) => api.get<User>('/auth/profile', { signal }),
   updateProfile: (data: { name?: string | null; phone?: string | null; district?: string | null }) => api.patch<User, typeof data>('/auth/profile', data),
 };

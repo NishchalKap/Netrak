@@ -13,7 +13,10 @@ export class CaseController {
 
   createCase = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await this.caseService.createCase(req.body, req.user!.id);
+      const data = await this.caseService.createCase(req.body, req.user!.id, {
+        audioBuffer: req.file?.buffer,
+        audioMimeType: req.file?.mimetype,
+      });
       sendSuccess(res, data, 'Case created successfully', 201);
     } catch (error) {
       next(error);

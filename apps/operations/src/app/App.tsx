@@ -1,9 +1,10 @@
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { Skeleton } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { Callback } from '@/features/auth/Callback';
 import { AppShell } from './AppShell';
+import { NetrakLoader } from '@/components/NetrakLoader';
 
 const OfficerDashboard = lazy(() => import('@/pages/OfficerDashboard').then((module) => ({ default: module.OfficerDashboard })));
 const CaseQueue = lazy(() => import('@/pages/CaseQueue').then((module) => ({ default: module.CaseQueue })));
@@ -40,12 +41,34 @@ class OperationalErrorBoundary extends Component<{ children: ReactNode }, { fail
 
 function ProtectedShell() {
   const { user, initializing } = useAuth();
-  if (initializing) return <main className="route-loading"><Skeleton rows={6} /></main>;
+  if (initializing) return <NetrakLoader message="Authenticating credentials..." />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'CITIZEN') return <main className="access-boundary"><h1>Operational access required.</h1><p>Your account belongs to the citizen service. Open the Netrak citizen application to continue.</p></main>;
   return <AppShell />;
 }
 
+const LandingPage = lazy(() => import('@/pages/landing/LandingPage').then((module) => ({ default: module.LandingPage })));
+
 export function App() {
-  return <OperationalErrorBoundary><Suspense fallback={<main className="route-loading" aria-busy="true"><Skeleton rows={6} /></main>}><Routes><Route path="/login" element={<LoginPage />} /><Route element={<ProtectedShell />}><Route index element={<OfficerDashboard />} /><Route path="cases" element={<CaseQueue />} /><Route path="cases/:id" element={<InvestigationWorkspace />} /><Route path="command" element={<CommandCenter />} /><Route path="intelligence" element={<ThreatIntelligence />} /><Route path="evidence" element={<EvidenceExplorer />} /><Route path="timeline" element={<TimelineExplorer />} /><Route path="analytics" element={<AnalyticsPage />} /><Route path="maps" element={<HeatMapPage />} /><Route path="admin" element={<AdminPortal />} /><Route path="notifications" element={<NotificationsPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="*" element={<NotFoundPage />} /></Route></Routes></Suspense></OperationalErrorBoundary>;
+  return <OperationalErrorBoundary><Suspense fallback={<NetrakLoader message="Loading module..." />}><Routes>
+    <Route path="/" element={<LandingPage />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/auth/callback" element={<Callback />} />
+    <Route path="/dashboard" element={<ProtectedShell />}>
+      <Route index element={<OfficerDashboard />} />
+      <Route path="cases" element={<CaseQueue />} />
+      <Route path="cases/:id" element={<InvestigationWorkspace />} />
+      <Route path="command" element={<CommandCenter />} />
+      <Route path="intelligence" element={<ThreatIntelligence />} />
+      <Route path="evidence" element={<EvidenceExplorer />} />
+      <Route path="timeline" element={<TimelineExplorer />} />
+      <Route path="analytics" element={<AnalyticsPage />} />
+      <Route path="maps" element={<HeatMapPage />} />
+      <Route path="admin" element={<AdminPortal />} />
+      <Route path="notifications" element={<NotificationsPage />} />
+      <Route path="profile" element={<ProfilePage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Route>
+    <Route path="*" element={<NotFoundPage />} />
+  </Routes></Suspense></OperationalErrorBoundary>;
 }

@@ -3,8 +3,8 @@ import { env } from './config/env';
 import { logger } from './common/logger';
 import { prisma } from './database/prisma';
 
-const server = app.listen(env.PORT, () => {
-  logger.info('Gateway started', { environment: env.NODE_ENV, port: env.PORT, apiDocs: env.API_DOCS_ENABLED });
+const server = app.listen(env.PORT, '0.0.0.0', () => {
+  logger.info('Gateway started', { environment: env.NODE_ENV, port: env.PORT, host: '0.0.0.0', apiDocs: env.API_DOCS_ENABLED });
 });
 server.requestTimeout = 30_000;
 server.headersTimeout = 15_000;

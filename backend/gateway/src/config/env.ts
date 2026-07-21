@@ -36,6 +36,9 @@ const envSchema = z.object({
   AI_SPEECH_PROVIDER: z.string().default('databricks'),
   DATABRICKS_SPEECH_URL: optionalUrl,
   DATABRICKS_API_KEY: z.string().optional(),
+  AI_LLM_PROVIDER: z.string().default('gemini'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.0-flash'),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -52,6 +52,36 @@ export interface CaseTimelineEvent {
   createdAt: string;
 }
 
+export interface Transcription {
+  id: string;
+  referenceId: string;
+  caseId?: string;
+  language?: string;
+  text: string;
+  confidence?: number;
+  createdAt: string;
+}
+
+export interface Entity {
+  id: string;
+  type: string;
+  value: string;
+  context?: string;
+  sourceId?: string;
+  caseId?: string;
+  createdAt: string;
+}
+
+export interface AIResult {
+  id: string;
+  provider: string;
+  serviceType: string;
+  inputRef?: string;
+  caseId?: string;
+  output: any;
+  createdAt: string;
+}
+
 export interface Case {
   id: string;
   title: string;
@@ -63,6 +93,9 @@ export interface Case {
   location?: string;
   evidence?: Evidence[];
   timeline?: CaseTimelineEvent[];
+  transcriptions?: Transcription[];
+  entities?: Entity[];
+  aiResults?: AIResult[];
   createdAt: string;
   updatedAt: string;
 }

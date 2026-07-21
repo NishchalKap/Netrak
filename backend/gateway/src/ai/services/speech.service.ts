@@ -25,43 +25,55 @@ export class SpeechService {
         model
       });
 
-      // Save inference history
-      await prisma.aIInferenceHistory.create({
-        data: {
-          provider: provider.name,
-          serviceType: 'speech_to_text',
-          status: 'SUCCESS',
-          durationMs: Date.now() - startTime,
-          response: JSON.parse(JSON.stringify(result))
-        }
-      });
+      // Save inference history (try/catch to not fail the whole request)
+      try {
+        await prisma.aIInferenceHistory.create({
+          data: {
+            provider: provider.name,
+            serviceType: 'speech_to_text',
+            status: 'SUCCESS',
+            durationMs: Date.now() - startTime,
+            response: JSON.parse(JSON.stringify(result))
+          }
+        });
+      } catch (dbErr) {
+        logger.warn('Failed to save success inference history', { dbErr });
+      }
 
       // Optionally save transcription if referenceId is provided
       if (referenceId) {
-        await prisma.transcription.create({
-          data: {
-            referenceId,
-            text: result.text,
-            language: result.language,
-            confidence: result.confidence
-          }
-        });
+        try {
+          await prisma.transcription.create({
+            data: {
+              referenceId,
+              text: result.text,
+              language: result.language,
+              confidence: result.confidence
+            }
+          });
+        } catch (dbErr) {
+          logger.warn('Failed to save transcription', { dbErr });
+        }
       }
 
       return result;
     } catch (error: any) {
       errorStr = error.message;
       
-      // Save failure history
-      await prisma.aIInferenceHistory.create({
-        data: {
-          provider: provider.name,
-          serviceType: 'speech_to_text',
-          status: 'ERROR',
-          durationMs: Date.now() - startTime,
-          error: errorStr
-        }
-      });
+      // Save failure history (try/catch to not fail the whole request)
+      try {
+        await prisma.aIInferenceHistory.create({
+          data: {
+            provider: provider.name,
+            serviceType: 'speech_to_text',
+            status: 'ERROR',
+            durationMs: Date.now() - startTime,
+            error: errorStr
+          }
+        });
+      } catch (dbErr) {
+        logger.warn('Failed to save error inference history', { dbErr });
+      }
       
       throw error;
     }

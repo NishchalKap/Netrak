@@ -8,6 +8,9 @@ export class CaseRepository {
       include: {
         evidence: { orderBy: { createdAt: 'desc' } },
         timeline: { orderBy: { createdAt: 'desc' } },
+        transcriptions: { orderBy: { createdAt: 'desc' } },
+        entities: { orderBy: { createdAt: 'desc' } },
+        aiResults: { orderBy: { createdAt: 'desc' } },
       },
       orderBy: { createdAt: 'desc' },
       take: limit ?? env.MAX_LIST_RESULTS,
@@ -21,6 +24,9 @@ export class CaseRepository {
       include: {
         evidence: { orderBy: { createdAt: 'desc' } },
         timeline: { orderBy: { createdAt: 'desc' } },
+        transcriptions: { orderBy: { createdAt: 'desc' } },
+        entities: { orderBy: { createdAt: 'desc' } },
+        aiResults: { orderBy: { createdAt: 'desc' } },
       },
     });
   }
@@ -47,6 +53,9 @@ export class CaseRepository {
       include: {
         evidence: { orderBy: { createdAt: 'desc' } },
         timeline: { orderBy: { createdAt: 'desc' } },
+        transcriptions: { orderBy: { createdAt: 'desc' } },
+        entities: { orderBy: { createdAt: 'desc' } },
+        aiResults: { orderBy: { createdAt: 'desc' } },
       },
     });
   }

@@ -41,8 +41,11 @@ model Case {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  evidence CaseEvidence[]
-  timeline CaseTimelineEvent[]
+  evidence       CaseEvidence[]
+  timeline       CaseTimelineEvent[]
+  transcriptions Transcription[] @relation("CaseTranscriptions")
+  entities       Entity[] @relation("CaseEntities")
+  aiResults      AIResult[] @relation("CaseAIResults")
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
@@ -111,12 +114,15 @@ model AIResult {
   provider    String
   serviceType String
   inputRef    String?
+  caseId      String?
+  case        Case?    @relation("CaseAIResults", fields: [caseId], references: [id], onDelete: Cascade)
   output      Json
   createdAt   DateTime @default(now())
 
   @@index([provider])
   @@index([serviceType])
   @@index([createdAt(sort: Desc)])
+  @@index([caseId])
   @@schema("public")
 }
 
@@ -134,12 +140,15 @@ model Embedding {
 model Transcription {
   id          String   @id @default(uuid())
   referenceId String
+  caseId      String?
+  case        Case?    @relation("CaseTranscriptions", fields: [caseId], references: [id], onDelete: Cascade)
   language    String?
   text        String
   confidence  Float?
   createdAt   DateTime @default(now())
 
   @@index([referenceId])
+  @@index([caseId])
   @@schema("public")
 }
 
@@ -149,10 +158,13 @@ model Entity {
   value       String
   context     String?
   sourceId    String?
+  caseId      String?
+  case        Case?    @relation("CaseEntities", fields: [caseId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@index([type])
   @@index([value])
+  @@index([caseId])
   @@schema("public")
 }
 

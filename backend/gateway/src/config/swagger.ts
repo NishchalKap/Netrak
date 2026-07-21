@@ -23,6 +23,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Notifications', description: 'Notification delivery and management endpoints' },
       { name: 'Threats', description: 'Deployment-configured advisory record endpoints' },
       { name: 'Storage', description: 'Signed object-storage upload targets' },
+      { name: 'AI', description: 'AI capabilities (Speech, Vision, Threat, etc.)' },
     ],
     components: {
       securitySchemes: {

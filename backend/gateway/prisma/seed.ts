@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -9,6 +10,10 @@ if (process.env.NODE_ENV === 'production' && process.env.SEED_ALLOW_PRODUCTION !
 }
 
 const prisma = new PrismaClient();
+const supabaseAdmin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
 const SCRYPT_OPTIONS: crypto.ScryptOptions = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 
 async function hashPassword(password: string) {
@@ -20,10 +25,30 @@ async function hashPassword(password: string) {
 }
 
 async function upsertUser(email: string, role: 'ADMIN' | 'OFFICER' | 'CITIZEN', password: string, name: string) {
+  const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+  let supaUser = users.find(u => u.email === email);
+  
+  if (!supaUser) {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { role, name }
+    });
+    if (error) throw error;
+    supaUser = data.user;
+  } else {
+    await supabaseAdmin.auth.admin.updateUserById(supaUser.id, {
+      password,
+      email_confirm: true,
+      user_metadata: { role, name }
+    });
+  }
+
   return prisma.user.upsert({
     where: { email },
-    update: { role, name, password: await hashPassword(password) },
-    create: { email, role, name, password: await hashPassword(password) },
+    update: { id: supaUser!.id, role, name, password: 'supabase-managed' },
+    create: { id: supaUser!.id, email, role, name, password: 'supabase-managed' },
   });
 }
 
