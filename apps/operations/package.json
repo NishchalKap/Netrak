@@ -4,12 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --configLoader runner",
-    "build": "tsc -b && vite build --configLoader runner",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=0",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "typecheck": "tsc -b --pretty false",
-    "preview": "vite preview --configLoader runner"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",

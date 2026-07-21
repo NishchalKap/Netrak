@@ -137,7 +137,10 @@ Use Expo Go app to scan the QR code
 ### Deploy Operations Dashboard (Frontend)
 1. Connect your GitHub repo to Vercel
 2. Set the **Root Directory** to `apps/operations`
-3. Configure environment variables in Vercel (copy from `apps/operations/.env.example`)
+3. **CRITICAL**: Configure environment variables in Vercel:
+   - Set `VITE_API_URL` to your deployed backend URL (e.g., `https://your-backend.vercel.app/api` or `https://your-backend.onrender.com/api`)
+   - DO NOT use `localhost` or `127.0.0.1` for VITE_API_URL on Vercel!
+   - Copy other vars from `apps/operations/.env.example`
 4. Deploy!
 
 ### Deploy Backend
