@@ -1,207 +1,691 @@
 <div align="center">
-  <h1>🚓 Netrak</h1>
-  <p><strong>Digital Public Safety Platform for Citizens & Law Enforcement</strong></p>
-  <p><strong>Team: The Elite Party</strong> | <strong>Hackathon: ET AI Hackathon 2.0</strong></p>
+
+# Netrak
+
+### AI-Native Public Safety & Investigation Platform
+
+Transforming fragmented citizen reports into structured investigative intelligence through Artificial Intelligence, Speech Intelligence, and Geospatial Analytics.
+
+<p>
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
+![React Native](https://img.shields.io/badge/React%20Native-Expo-000020?style=flat-square&logo=expo)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase)
+![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap)
+![MIT License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
+
+</p>
+
+**ET AI Hackathon 2.0**
+
+Developed by **The Elite Party**
+
 </div>
 
 ---
 
-## 🎯 What is Netrak?
+## Overview
 
-Netrak is a comprehensive digital public-safety platform that connects citizens with law enforcement, financial institutions, telecom operators, and government agencies. It features:
+Netrak is an AI-native investigation platform designed to modernize digital public safety operations. It enables citizens to securely report incidents while providing investigators with an intelligent operational workspace capable of transforming raw evidence into structured investigative intelligence.
 
-- **Citizen Mobile App**: Report incidents, upload evidence, and track status
-- **Law Enforcement Operations Dashboard**: Command center, analytics, case management, heat maps, and AI copilot
-- **AI-Powered Pipeline**: Speech-to-text transcription, summarization, entity extraction, and threat intelligence
-- **Secure & Scalable**: Built with modern technologies for reliability and performance
+Unlike traditional complaint management systems that primarily record reports, Netrak actively assists investigations through automated speech transcription, large language model–based summarization, entity extraction, geospatial visualization, and AI-assisted decision support.
 
----
-
-## ✨ Key Features
-
-### 📱 Citizen Mobile App
-- Incident reporting with multimedia evidence upload
-- Real-time case tracking
-- Secure authentication
-- Push notifications for updates
-
-### 👮 Law Enforcement Operations Dashboard
-- **Command Center**: Live overview of active incidents and resources
-- **Case Management**: Full investigation workflow with evidence tracking
-- **Heat Maps**: Geospatial visualization of incidents
-- **Timeline Explorer**: Chronological view of case events
-- **Analytics**: Data-driven insights and reports
-- **AI Copilot**: AI-powered assistance for investigations
-- **Threat Intelligence**: Real-time threat analysis and alerts
-
-### 🤖 AI Capabilities
-- Speech-to-text transcription (Databricks/Whisper)
-- Automatic case summarization
-- Entity extraction (names, phone numbers, emails, locations, etc.)
-- Threat classification
-- Multilingual support
+The platform establishes a unified workflow connecting citizens, investigators, and operational intelligence within a single ecosystem.
 
 ---
 
-## 🏗️ Architecture
+## The Challenge
 
-### Tech Stack
+Digital fraud, cybercrime, financial scams, identity theft, and social engineering attacks continue to increase in both frequency and sophistication. While attack techniques evolve rapidly, investigative workflows often remain dependent on fragmented reporting systems, manual evidence review, and disconnected operational tools.
 
-#### Backend
-- **Framework**: Express.js (Node.js)
-- **Language**: TypeScript
-- **Database**: PostgreSQL (via Prisma ORM)
-- **Auth**: Supabase Auth
-- **Storage**: Supabase Storage
-- **API Docs**: Swagger/OpenAPI
-- **AI/ML**: Gemini API (LLM), Databricks Speech-to-Text
-- **Rate Limiting**: Custom middleware
+This results in several operational challenges:
 
-#### Frontend (Operations Dashboard)
-- **Framework**: React 19
-- **Build Tool**: Vite
-- **Routing**: React Router
-- **Data Fetching**: TanStack Query
-- **Styling**: Tailwind CSS + Custom Design System
-- **Charts**: Recharts
-- **Maps**: Leaflet + React Leaflet (OpenStreetMap)
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
+- Unstructured complaints submitted through multiple channels.
+- Manual extraction of relevant investigative information.
+- Fragmented evidence management.
+- Limited situational awareness across active investigations.
+- Increased investigation turnaround time.
+- Minimal AI-assisted decision support.
 
-#### Mobile App
-- **Framework**: Expo (React Native)
-- **Language**: TypeScript
-- **State Management**: Zustand
-- **Navigation**: Expo Router
+These limitations reduce operational efficiency and delay investigative response.
 
 ---
 
-## 🚀 Getting Started
+## Our Approach
 
-### Prerequisites
-- Node.js 20+
-- npm or yarn
-- PostgreSQL (or use Supabase PostgreSQL)
-- Supabase account (for storage/auth)
-- Gemini API key
-- Databricks Speech-to-Text endpoint (optional)
+Netrak introduces an AI-native investigation workflow that augments investigators rather than replacing them.
 
-### Local Installation & Setup
+Citizen-submitted evidence—including text, audio recordings, documents, and supporting media—is processed through an intelligence pipeline that automatically generates structured investigative artifacts. These outputs are then surfaced within an integrated operational dashboard, enabling investigators to focus on decision-making rather than repetitive administrative tasks.
 
-1. **Clone the repo**
-```bash
-git clone https://github.com/NishchalKap/Netrak.git
-cd Netrak
+The platform combines operational awareness, evidence management, geospatial visualization, and AI-assisted investigation into a single extensible architecture.
+
+---
+
+## Key Design Principles
+
+| Principle | Description |
+|-----------|-------------|
+| AI-First | Artificial Intelligence augments every stage of the investigation lifecycle. |
+| Unified Operations | Citizens, investigators, evidence, and intelligence operate within a common platform. |
+| Modular Architecture | Independent services allow new capabilities to be integrated without major architectural changes. |
+| Human-Centered | AI assists investigators while maintaining human oversight and decision authority. |
+| Scalable by Design | Built using modern cloud-native technologies suitable for future expansion. |
+
+---
+
+# Platform Overview
+
+Netrak is composed of two primary applications connected through a common backend and AI orchestration layer.
+
+| Platform | Primary Users | Purpose |
+|----------|---------------|---------|
+| **Citizen Application** | Citizens | Incident reporting, evidence submission, case tracking, notifications |
+| **Operations Platform** | Law Enforcement Agencies | Investigation management, operational monitoring, AI-assisted analysis, intelligence visualization |
+
+Both applications communicate through a centralized API Gateway backed by PostgreSQL, Supabase services, and an extensible AI provider architecture.
+
+---
+
+# Core Platform Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| Case Management | Create, assign, investigate, and resolve cases through a structured workflow. |
+| Evidence Management | Securely organize documents, images, audio recordings, and supporting artifacts. |
+| AI Investigation Pipeline | Transform raw evidence into structured intelligence using Speech AI and LLMs. |
+| Geospatial Intelligence | Visualize incidents geographically through interactive mapping and heat maps. |
+| Timeline Reconstruction | Generate chronological investigation timelines from case events. |
+| Operational Analytics | Monitor investigation metrics, workload distribution, and operational trends. |
+| AI Copilot | Assist investigators with contextual summaries, insights, and investigative guidance. |
+| Threat Intelligence | Aggregate and monitor threat advisories and intelligence feeds. |
+
+---
+
+# Investigation Workflow
+
+```text
+Citizen
+    │
+    ▼
+Incident Report
+    │
+    ▼
+Evidence Collection
+(Text • Images • Audio • Documents)
+    │
+    ▼
+API Gateway
+    │
+    ▼
+AI Processing Pipeline
+────────────────────────────────────────
+Speech Transcription
+
+↓
+
+Case Summarization
+
+↓
+
+Entity Extraction
+
+↓
+
+Investigation Intelligence
+────────────────────────────────────────
+    │
+    ▼
+Case Repository
+    │
+    ▼
+Operations Dashboard
+    │
+    ├───────────────┐
+    ▼               ▼
+Analytics      Timeline Explorer
+
+    ├───────────────┤
+
+    ▼               ▼
+Heat Maps      AI Copilot
+
+            │
+
+            ▼
+      Investigation & Response
 ```
 
-2. **Install dependencies**
-```bash
-npm run install:all
+---
+
+# Operations Platform
+
+The Operations Platform provides investigators with a unified operational workspace designed to support every stage of an investigation.
+
+## Command Center
+
+A centralized operational dashboard providing a live overview of:
+
+- Active investigations
+- Investigation status
+- Threat activity
+- Operational notifications
+- Case distribution
+- Platform health
+
+---
+
+## Investigation Workspace
+
+A dedicated environment where investigators can:
+
+- Review case information
+- Examine supporting evidence
+- View AI-generated summaries
+- Inspect extracted entities
+- Manage investigation timelines
+- Interact with the AI Copilot
+
+---
+
+## Geographic Intelligence
+
+Interactive geospatial visualization enables investigators to:
+
+- View reported incidents geographically
+- Identify regional patterns
+- Detect emerging hotspots
+- Improve operational awareness using OpenStreetMap integration
+
+---
+
+## Analytics & Intelligence
+
+Operational dashboards transform investigation data into actionable insights through:
+
+- Case distribution analytics
+- Investigation trends
+- Threat categorization
+- Risk-level analysis
+- Performance metrics
+
+  ---
+
+# System Architecture
+
+Netrak follows a modular service-oriented architecture that separates citizen interaction, operational workflows, artificial intelligence, and infrastructure concerns. Each layer is independently extensible, enabling new capabilities to be integrated without impacting existing services.
+
+```text
+                           +----------------------+
+                           |   Citizen Platform   |
+                           |  React Native (Expo) |
+                           +----------+-----------+
+                                      |
+                                      |
+                                      v
+                           +----------------------+
+                           | Operations Platform  |
+                           | React • TypeScript   |
+                           +----------+-----------+
+                                      |
+                                      |
+                                      v
+                    +------------------------------------+
+                    |         API Gateway                |
+                    |     Express • TypeScript           |
+                    +----------------+-------------------+
+                                     |
+      +------------------------------+-------------------------------+
+      |                              |                               |
+      v                              v                               v
++--------------+            +----------------+             +----------------+
+| Case Service |            | Evidence Layer |             | AI Orchestrator|
++--------------+            +----------------+             +----------------+
+      |                              |                               |
+      +------------------------------+-------------------------------+
+                                     |
+                                     v
+                         +-------------------------+
+                         | Provider Registry       |
+                         +-----------+-------------+
+                                     |
+             +-----------------------+------------------------+
+             |                                                |
+             v                                                v
+    Google Gemini                             Databricks Speech Intelligence
+
+                                     |
+                                     v
+
+                         +-------------------------+
+                         | PostgreSQL + Prisma ORM |
+                         +-------------------------+
+                                     |
+                     +---------------+---------------+
+                     |                               |
+                     v                               v
+             Supabase Auth                  Supabase Storage
 ```
 
-3. **Configure Environment Variables**
-   - For backend: Copy `backend/gateway/.env.example` to `backend/gateway/.env` and fill in values
-   - For operations: Copy `apps/operations/.env.example` to `apps/operations/.env` and fill in values
-   - For mobile: Copy `apps/mobile/.env.example` to `apps/mobile/.env` and fill in values
+---
 
-4. **Run Database Migration & Seed**
+# Artificial Intelligence Pipeline
+
+Every investigation follows a structured intelligence pipeline designed to reduce manual effort while preserving investigator oversight.
+
+```text
+Citizen Report
+
+        │
+
+        ▼
+
+Evidence Submission
+
+(Text • Images • Audio • Documents)
+
+        │
+
+        ▼
+
+Speech Processing
+
+        │
+
+        ▼
+
+Automatic Transcription
+
+        │
+
+        ▼
+
+Large Language Model
+
+        │
+
+        ▼
+
+Case Summary
+
+        │
+
+        ▼
+
+Entity Extraction
+
+(Persons • Phone Numbers • Accounts • Emails • Locations)
+
+        │
+
+        ▼
+
+Structured Investigation Record
+
+        │
+
+        ▼
+
+Officer Workspace
+
+        │
+
+        ▼
+
+AI Copilot Assistance
+```
+
+The AI pipeline is implemented as a provider-based architecture, allowing speech models and language models to be replaced or extended without modifying downstream investigation workflows.
+
+---
+
+# Technology Stack
+
+| Layer | Technologies |
+|--------|--------------|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Mobile | React Native, Expo, Expo Router, Zustand |
+| Backend | Node.js, Express.js, TypeScript |
+| Database | PostgreSQL, Prisma ORM |
+| Authentication | Supabase Auth |
+| Storage | Supabase Storage |
+| Artificial Intelligence | Google Gemini, Databricks Speech Intelligence |
+| Mapping | OpenStreetMap, React Leaflet |
+| API Documentation | Swagger / OpenAPI |
+| Validation | Zod |
+| Data Fetching | TanStack Query |
+
+---
+
+# Engineering Principles
+
+The platform is designed around several architectural principles.
+
+| Principle | Implementation |
+|-----------|----------------|
+| Modular Services | Independent service boundaries separate business logic from infrastructure concerns. |
+| Provider Abstraction | AI providers are registered through a common interface, enabling future model integrations with minimal code changes. |
+| API-First Design | All applications communicate through a centralized REST API. |
+| Separation of Concerns | Frontend, backend, AI services, and infrastructure remain independently maintainable. |
+| Extensibility | Additional intelligence providers, storage systems, and analytics modules can be integrated without restructuring the platform. |
+
+---
+
+# Repository Structure
+
+```text
+Netrak
+│
+├── apps
+│   ├── mobile
+│   └── operations
+│
+├── backend
+│   └── gateway
+│
+├── docs
+│
+├── netrak_speech_intelligence
+│
+├── packages
+│
+├── scripts
+│
+└── README.md
+```
+
+Each component is independently deployable while sharing common APIs, authentication, and persistence layers.
+
+---
+
+# Design Philosophy
+
+Netrak is not intended to function solely as a complaint management system.
+
+It is designed as an extensible investigation platform capable of evolving into a broader public safety ecosystem through modular intelligence services, interoperable APIs, and AI-assisted operational workflows.
+
+The architecture prioritizes maintainability, extensibility, and operational transparency over tightly coupled implementations, allowing future capabilities such as predictive analytics, threat intelligence feeds, and inter-agency collaboration to be incorporated with minimal architectural disruption.
+
+---
+
+# Getting Started
+
+## Prerequisites
+
+Ensure the following dependencies are installed before setting up the project.
+
+| Requirement | Version |
+|-------------|---------|
+| Node.js | >= 20.x |
+| npm | >= 10.x |
+| PostgreSQL | >= 15 |
+| Git | Latest |
+| Expo CLI | Latest (Mobile Development) |
+
+---
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/<your-org>/netrak.git
+
+cd netrak
+```
+
+---
+
+## Install Dependencies
+
+Install dependencies for all workspaces.
+
+```bash
+npm install
+```
+
+---
+
+## Environment Configuration
+
+Create environment files for each application.
+
+```text
+backend/gateway/.env
+
+apps/operations/.env
+
+apps/mobile/.env
+```
+
+### Backend
+
+```env
+PORT=3000
+
+DATABASE_URL=
+
+SUPABASE_URL=
+
+SUPABASE_ANON_KEY=
+
+SUPABASE_SERVICE_ROLE_KEY=
+
+JWT_SECRET=
+
+GEMINI_API_KEY=
+
+DATABRICKS_API_KEY=
+
+DATABRICKS_ENDPOINT=
+```
+
+### Operations Dashboard
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+### Mobile Application
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:3000
+```
+
+---
+
+# Running the Platform
+
+### Backend
+
 ```bash
 cd backend/gateway
-npm run prisma:migrate:deploy
-npm run prisma:seed
-```
 
-5. **Start Backend**
-```bash
-cd backend/gateway
 npm run dev
 ```
-Backend will be available at http://localhost:3000
 
-6. **Start Operations Dashboard**
+---
+
+### Operations Dashboard
+
 ```bash
 cd apps/operations
+
 npm run dev
 ```
-Dashboard will be available at http://localhost:4173
 
-7. **Start Mobile App**
+---
+
+### Mobile Application
+
 ```bash
 cd apps/mobile
-npm run start
+
+npx expo start
 ```
-Use Expo Go app to scan the QR code
-
-## 🌐 Deploying to Vercel
-
-### Deploy Operations Dashboard (Frontend)
-1. Connect your GitHub repo to Vercel
-2. Set the **Root Directory** to `apps/operations`
-3. **CRITICAL**: Configure environment variables in Vercel:
-   - Set `VITE_API_URL` to your deployed backend URL (e.g., `https://your-backend.vercel.app/api` or `https://your-backend.onrender.com/api`)
-   - DO NOT use `localhost` or `127.0.0.1` for VITE_API_URL on Vercel!
-   - Copy other vars from `apps/operations/.env.example`
-4. Deploy!
-
-### Deploy Backend
-The backend is best deployed on a Node.js hosting platform (e.g., Railway, Render, AWS, etc.)
-- Set environment variables from `backend/gateway/.env.example`
-- Run database migrations before starting the server
-- Seed the database for demo credentials
-
-## 🔐 Demo Login Credentials
-These are created when you run `npm run prisma:seed`:
-
-| Role      | Email                  | Password             |
-|-----------|------------------------|----------------------|
-| Admin     | admin@netrak.local     | NetrakAdmin!2026     |
-| Officer   | officer@netrak.local   | NetrakOfficer!2026   |
-| Citizen   | citizen@netrak.local   | NetrakCitizen!2026   |
 
 ---
 
-## 📖 Usage Guide
+# API Documentation
 
-### For Citizens
-1. Download the Netrak mobile app
-2. Create an account or sign in
-3. Report an incident with details and evidence
-4. Track your case status in real-time
+Once the backend is running, interactive API documentation is available through Swagger.
 
-### For Law Enforcement Officers
-1. Open the Operations Dashboard
-2. Sign in with your officer/admin credentials
-3. View the Command Center for live updates
-4. Manage cases, add evidence, and collaborate
-5. Use the AI Copilot for investigation assistance
-6. View heat maps, timelines, and analytics
+```text
+http://localhost:3000/api-docs
+```
 
 ---
 
-## 📚 Documentation
+# Deployment Architecture
 
-- [Architecture Summary](docs/architecture/architecture-summary.md)
-- [Operational Platform](docs/architecture/operational-platform.md)
-- [AI Platform Integration](docs/architecture/ai-platform-integration.md)
-- [Design System](docs/design/DESIGN.md)
-- [Release Candidate Runbook](docs/release-candidate.md)
-- [Security Policy](SECURITY.md)
+```mermaid
+flowchart LR
+
+Developer
+
+--> GitHub
+
+GitHub
+
+--> CI/CD Pipeline
+
+CI/CD Pipeline
+
+--> Backend
+
+CI/CD Pipeline
+
+--> Operations Dashboard
+
+CI/CD Pipeline
+
+--> Mobile Build
+
+Backend
+
+--> PostgreSQL
+
+Backend
+
+--> Supabase
+
+Backend
+
+--> AI Providers
+```
 
 ---
 
-## 🤝 Team
+# Security Considerations
 
-**The Elite Party**
+Netrak has been designed with security as a foundational principle.
+
+Current security controls include:
+
+- JWT-based authentication
+- Role-based authorization
+- Request validation using Zod
+- Parameterized database queries through Prisma
+- Secure credential management using environment variables
+- Protected API routes
+- CORS configuration
+- Structured request validation
+- Centralized authentication using Supabase
+
+Future security enhancements include:
+
+- Multi-factor authentication
+- Audit logging
+- End-to-end evidence integrity verification
+- Tamper detection
+- Digital evidence hashing
+- Case-level encryption
 
 ---
 
-## 📝 License
+# Performance Goals
 
-This project is licensed under the MIT License.
+| Metric | Target |
+|---------|--------|
+| API Response | < 300 ms |
+| AI Summary Generation | < 10 s |
+| Speech Processing | < 30 s |
+| Dashboard Load Time | < 2 s |
+| Case Search | < 500 ms |
 
 ---
 
-## 🎉 Acknowledgments
+# Roadmap
 
-- ET AI Hackathon 2.0
-- Open-source contributors
+## Phase 1
+
+- [x] Citizen reporting
+- [x] Operations dashboard
+- [x] AI summarization
+- [x] Entity extraction
+- [x] Heat map visualization
+- [x] Timeline management
+- [x] Threat intelligence
+- [x] AI Copilot
+
+---
+
+## Phase 2
+
+- [ ] Predictive crime analytics
+- [ ] Cross-case intelligence correlation
+- [ ] Facial recognition integration
+- [ ] Vehicle intelligence
+- [ ] Multi-language speech processing
+- [ ] Offline mobile reporting
+- [ ] Digital evidence chain-of-custody
+- [ ] Inter-agency collaboration
+
+---
+
+## Phase 3
+
+- [ ] National intelligence network
+- [ ] Federated investigation platform
+- [ ] AI-powered investigative recommendations
+- [ ] Advanced graph analytics
+- [ ] Real-time anomaly detection
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+If you would like to improve the platform:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes.
+4. Open a Pull Request.
+
+Please ensure new features include appropriate documentation and follow the project's coding conventions.
+
+---
+
+# License
+
+This project is distributed under the MIT License.
+
+See the `LICENSE` file for additional information.
+
+---
+
+# Team
+
+Developed for **ET AI Hackathon 2.0**
+
+**Team:** The Elite Party
+
+---
+
+<div align="center">
+
+Built with modern cloud-native technologies to support the next generation of AI-assisted public safety operations.
+
+</div>
