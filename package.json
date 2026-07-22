@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Netrak public safety platform",
+  "workspaces": [
+    "backend/gateway",
+    "apps/operations",
+    "apps/mobile"
+  ],
   "scripts": {
     "install:gateway": "npm install --prefix backend/gateway",
     "install:operations": "npm install --prefix apps/operations",
