@@ -151,7 +151,7 @@ router.get('/profile', authenticate, authController.profile);
  *             schema:
  *               $ref: '#/components/schemas/ApiError'
  */
-router.patch('/profile', authenticate, validate(updateProfileSchema), authController.updateProfile);
+// router.patch('/profile', authenticate, validate(updateProfileSchema), authController.updateProfile);
 
 /**
  * @swagger

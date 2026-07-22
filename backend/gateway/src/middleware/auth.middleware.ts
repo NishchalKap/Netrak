@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../common/AppError';
 import { supabaseAdmin } from '../config/supabase';
-import { prisma } from '../database/prisma';
 
 export type UserRole = 'CITIZEN' | 'OFFICER' | 'ADMIN';
 export interface AuthenticatedUser { id: string; role: UserRole; email: string }
@@ -28,20 +27,16 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return next(new AppError('Invalid authentication token', 401));
     }
 
-    // Fetch user from Prisma to get application role
-    const dbUser = await prisma.user.findUnique({
-      where: { id: data.user.id },
-      select: { id: true, role: true, email: true }
-    });
+    const role = (data.user.user_metadata?.role as UserRole) || 'CITIZEN';
 
-    if (!dbUser || !USER_ROLES.includes(dbUser.role as UserRole)) {
+    if (!USER_ROLES.includes(role)) {
       return next(new AppError('Invalid user or role', 401));
     }
 
     req.user = { 
-      id: dbUser.id, 
-      role: dbUser.role as UserRole, 
-      email: dbUser.email 
+      id: data.user.id, 
+      role, 
+      email: data.user.email! 
     };
     
     next();
