@@ -17,8 +17,16 @@ L.Icon.Default.mergeOptions({
 });
 
 // A hook to safely geocode location strings using a free API (Nominatim)
+const STATIC_COORDINATES: Record<string, [number, number]> = {
+  'Connaught Place, New Delhi': [28.6315, 77.2167],
+  'Cyber City, Gurugram': [28.4950, 77.0895],
+  'Bandra Kurla Complex, Mumbai': [19.0600, 72.8680],
+  'MG Road, Bengaluru': [12.9756, 77.6066],
+  'Sector 17, Chandigarh': [30.7398, 76.7827],
+};
+
 function useGeocodedCases(cases: CaseRecord[] | undefined) {
-  const [geocoded, setGeocoded] = useState<Record<string, [number, number]>>({});
+  const [geocoded, setGeocoded] = useState<Record<string, [number, number]>>(STATIC_COORDINATES);
 
   useEffect(() => {
     if (!cases) return;
@@ -30,7 +38,12 @@ function useGeocodedCases(cases: CaseRecord[] | undefined) {
         if (!item.location) continue;
         if (newGeocoded[item.location]) continue;
 
-        // Check local cache first to avoid spamming the free API
+        if (STATIC_COORDINATES[item.location]) {
+          newGeocoded[item.location] = STATIC_COORDINATES[item.location];
+          changed = true;
+          continue;
+        }
+
         const cached = sessionStorage.getItem(`geocode_${item.location}`);
         if (cached) {
           newGeocoded[item.location] = JSON.parse(cached);
@@ -39,7 +52,6 @@ function useGeocodedCases(cases: CaseRecord[] | undefined) {
         }
 
         try {
-          // OpenStreetMap Nominatim Free Geocoding API
           const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(item.location)}&limit=1`);
           const data = await res.json();
           if (data && data.length > 0) {
@@ -51,7 +63,6 @@ function useGeocodedCases(cases: CaseRecord[] | undefined) {
         } catch (err) {
           console.error("Geocoding failed for", item.location, err);
         }
-        // Sleep to respect rate limit (1 req/sec for Nominatim)
         await new Promise(r => setTimeout(r, 1000));
       }
 
@@ -94,7 +105,7 @@ export function HeatMapPage() {
       title="Incident geography"
       description="Location context from case records, plotted using live geocoding."
       actions={
-        <select value={risk} onChange={(event) => setRisk(event.target.value)} aria-label="Risk filter" className="bg-[#0A0E17] border border-white/10 text-white rounded-md px-3 py-1.5 text-sm outline-none focus:border-[#00E5FF]">
+        <select value={risk} onChange={(event) => setRisk(event.target.value)} aria-label="Risk filter" className="map-filter">
           <option value="ALL">All risk</option>
           <option value="critical">Critical</option>
           <option value="high">High</option>
@@ -107,8 +118,8 @@ export function HeatMapPage() {
       <ErrorState error={query.error} retry={() => void query.refetch()} />
     ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 overflow-hidden border border-white/10 relative h-[600px] z-0 p-0">
-          <MapContainer center={defaultCenter} zoom={4} style={{ height: '100%', width: '100%' }} className="bg-[#03050A]">
+        <Card className="map-card lg:col-span-2">
+          <MapContainer center={defaultCenter} zoom={4} style={{ height: '100%', width: '100%' }} className="operations-map">
             <MapUpdater center={selectedCenter} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -119,7 +130,7 @@ export function HeatMapPage() {
                 const position = geocoded[item.location];
                 return (
                   <Marker key={item.id} position={position}>
-                    <Popup className="text-black">
+                    <Popup>
                       <div className="font-bold text-sm mb-1">{item.title}</div>
                       <div className="text-xs">{item.location}</div>
                       <div className="text-xs text-gray-500 mt-1">{formatDate(item.updatedAt)}</div>
@@ -131,19 +142,19 @@ export function HeatMapPage() {
             })}
           </MapContainer>
           {Object.keys(geocoded).length === 0 && located.length > 0 && (
-            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-lg flex items-center gap-2 text-sm z-[1000] text-gray-300">
-              <span className="w-4 h-4 rounded-full border-2 border-[#00E5FF] border-t-transparent animate-spin" />
+            <div className="map-geocoding-status">
+              <span />
               Geocoding locations...
             </div>
           )}
         </Card>
         
-        <Card className="flex flex-col gap-4 border border-white/10 bg-[#0A0E17]/50 max-h-[600px] overflow-y-auto">
+        <Card className="map-location-list">
           <SectionHeader title="Reported locations" description="Select a location to zoom." />
           {located.length === 0 ? (
             <EmptyState title="No location labels" description="No cases in the selected risk band contain a location field." />
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="map-location-items">
               {located.map((item) => {
                 const hasCoords = item.location && geocoded[item.location];
                 return (
@@ -154,14 +165,14 @@ export function HeatMapPage() {
                         setSelectedCenter(geocoded[item.location]);
                       }
                     }}
-                    className={`p-3 rounded-lg border border-white/5 bg-white/[0.02] transition-colors flex justify-between items-start ${hasCoords ? 'cursor-pointer hover:bg-white/[0.05] hover:border-white/10' : 'opacity-70'}`}
+                    className={`map-location ${hasCoords ? 'map-location--available' : 'map-location--pending'}`}
                   >
-                    <div className="flex flex-col gap-1">
-                      <strong className="text-sm flex items-center gap-1.5">
-                        <LocateFixed size={14} className={hasCoords ? 'text-[#00E5FF]' : 'text-gray-500'} /> 
+                    <div>
+                      <strong>
+                        <LocateFixed size={14} className={hasCoords ? 'map-location__icon' : ''} /> 
                         {item.location}
                       </strong>
-                      <span className="text-xs text-gray-400">{item.title}</span>
+                      <span>{item.title}</span>
                     </div>
                     <RiskBadge value={inferRisk(item)} />
                   </div>

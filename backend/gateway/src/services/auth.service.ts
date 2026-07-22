@@ -22,6 +22,8 @@ export class AuthService {
     const supabaseUser = authData.user;
     const role = (supabaseUser.user_metadata?.role as string) || 'CITIZEN';
     const name = supabaseUser.user_metadata?.name as string | undefined;
+    const phone = supabaseUser.user_metadata?.phone as string | undefined;
+    const district = supabaseUser.user_metadata?.district as string | undefined;
 
     if (!USER_ROLES.has(role)) {
       logger.error('Account has an invalid persisted role', { userId: supabaseUser.id });
@@ -36,8 +38,8 @@ export class AuthService {
         email: supabaseUser.email!,
         role,
         name,
-        phone: undefined,
-        district: undefined,
+        phone,
+        district,
       },
     };
   }
@@ -99,14 +101,35 @@ export class AuthService {
     
     const role = (user.user_metadata?.role as string) || 'CITIZEN';
     const name = user.user_metadata?.name as string | undefined;
+    const phone = user.user_metadata?.phone as string | undefined;
+    const district = user.user_metadata?.district as string | undefined;
 
     return {
       id: user.id,
       email: user.email!,
       role,
       name,
-      phone: undefined,
-      district: undefined,
+      phone,
+      district,
+    };
+  }
+
+  async updateProfile(userId: string, data: UpdateProfileDto) {
+    const { data: existing, error: lookupError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (lookupError || !existing.user) throw new AppError('User not found', 404);
+
+    const metadata = { ...existing.user.user_metadata, ...data };
+    const { data: updated, error } = await supabaseAdmin.auth.admin.updateUserById(userId, { user_metadata: metadata });
+    if (error || !updated.user) throw new AppError(error?.message || 'Profile could not be updated', 400);
+
+    const user = updated.user;
+    return {
+      id: user.id,
+      email: user.email!,
+      role: (user.user_metadata?.role as string) || 'CITIZEN',
+      name: (user.user_metadata?.name as string | null | undefined) ?? undefined,
+      phone: (user.user_metadata?.phone as string | null | undefined) ?? undefined,
+      district: (user.user_metadata?.district as string | null | undefined) ?? undefined,
     };
   }
 

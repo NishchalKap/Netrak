@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CapabilityNotice, Card, EmptyState, ErrorState, MetricCard, PageHeader, RiskBadge, SectionHeader, Skeleton } from '@/components/ui';
 import { useCases, useHealth, useNotifications, useThreats } from '@/data/queries';
 import { formatRelative, inferRisk, titleCase } from '@/lib/format';
+import { ROUTES } from '@/app/routes';
 
 export function CommandCenter() {
   const cases = useCases();
@@ -27,14 +28,14 @@ export function CommandCenter() {
       <MetricCard label="Open investigations" value={active.length} detail={`${severe.length} high-priority signals`} icon={<Activity size={19} />} />
       <MetricCard label="Escalated" value={active.filter((item) => item.status === 'ESCALATED').length} detail="Workflow state from case service" icon={<CircleAlert size={19} />} />
       <MetricCard label="Advisory contexts" value={contexts.length} detail="Location labels supplied by advisories" icon={<Building2 size={19} />} />
-      <MetricCard label="Gateway" value={health.data?.status ? titleCase(health.data.status) : 'Unavailable'} detail={health.isError ? 'Health check failed' : 'Health endpoint responding'} icon={<RadioTower size={19} />} />
+      <MetricCard label="Gateway" value={health.data?.status ? titleCase(health.data.status) : 'Unavailable'} detail={health.data?.status === 'degraded' || health.isError ? 'Health check failed' : 'Health endpoint responding'} icon={<RadioTower size={19} />} />
     </div>
     <div className="dashboard-grid">
       <Card className="span-8">
         <SectionHeader title="Cases requiring command attention" description="Active records with high or critical reported or deterministic fallback risk." />
         {severe.length === 0 ? <EmptyState title="No high-priority cases" description="The current case set contains no active high or critical risk signals." /> : (
           <div className="record-list">{severe.slice(0, 8).map((item) => (
-            <Link className="record-row" to={`/cases/${item.id}`} key={item.id}>
+            <Link className="record-row" to={ROUTES.dashboard.case(item.id)} key={item.id}>
               <div className="record-row__marker"><ShieldCheck size={17} /></div>
               <div><small className="mono">{item.id}</small><strong>{item.title}</strong><p>{item.location || 'Location not supplied'}</p></div>
               <div><RiskBadge value={inferRisk(item)} /><span>{formatRelative(item.updatedAt)}</span></div>

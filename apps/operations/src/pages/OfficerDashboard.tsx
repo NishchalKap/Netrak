@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, EmptyState, ErrorState, MetricCard, PageHeader, RiskBadge, SectionHeader, Skeleton } from '@/components/ui';
 import { useCases, useHealth, useNotifications, useThreats } from '@/data/queries';
 import { formatRelative, inferRisk, titleCase } from '@/lib/format';
+import { ROUTES } from '@/app/routes';
 
 export function OfficerDashboard() {
   const cases = useCases();
@@ -32,10 +33,10 @@ export function OfficerDashboard() {
     </div>
     <div className="dashboard-grid">
       <Card className="span-8">
-        <SectionHeader title="Priority case queue" description="Open investigations ranked by reported risk, with a deterministic metadata fallback when risk is absent." action={<Link to="/cases" className="text-link">Open queue <ArrowRight size={16} /></Link>} />
+        <SectionHeader title="Priority case queue" description="Open investigations ranked by reported risk, with a deterministic metadata fallback when risk is absent." action={<Link to={ROUTES.dashboard.cases} className="text-link">Open queue <ArrowRight size={16} /></Link>} />
         {priority.length === 0 ? <EmptyState title="No active cases" description="New reports will appear here when they enter the case service." /> : (
           <div className="record-list">{priority.map((item) => (
-            <Link to={`/cases/${item.id}`} className="record-row" key={item.id}>
+            <Link to={ROUTES.dashboard.case(item.id)} className="record-row" key={item.id}>
               <div className="record-row__marker"><ShieldCheck size={17} /></div>
               <div><small className="mono">{item.id}</small><strong>{item.title}</strong><p>{item.description}</p></div>
               <div><RiskBadge value={inferRisk(item)} /><span>{formatRelative(item.updatedAt)}</span></div>
@@ -46,12 +47,12 @@ export function OfficerDashboard() {
       <Card className="span-4">
         <SectionHeader title="Advisory posture" description={threats.data?.source === 'cached' ? `Cached copy · synced ${formatRelative(threats.data.syncedAt)}` : 'Configured gateway advisory feed'} />
         {criticalThreats.length === 0 ? <EmptyState title="No elevated advisories" description="No high or critical advisory is present in the selected feed." /> : (
-          <div className="compact-list">{criticalThreats.slice(0, 5).map((item) => <Link to={`/intelligence?threat=${item.id}`} key={item.id}><div><strong>{item.title}</strong><span>{item.region}</span></div><RiskBadge value={item.level} /></Link>)}</div>
+          <div className="compact-list">{criticalThreats.slice(0, 5).map((item) => <Link to={`${ROUTES.dashboard.intelligence}?threat=${item.id}`} key={item.id}><div><strong>{item.title}</strong><span>{item.region}</span></div><RiskBadge value={item.level} /></Link>)}</div>
         )}
-        <Link to="/intelligence" className="button button--secondary button--block">Review advisories</Link>
+        <Link to={ROUTES.dashboard.intelligence} className="button button--secondary button--block">Review advisories</Link>
       </Card>
       <Card className="span-12">
-        <SectionHeader title="Recent operational notifications" description="Records returned by the existing notification service." action={<Link to="/notifications" className="text-link">View all <ArrowRight size={16} /></Link>} />
+        <SectionHeader title="Recent operational notifications" description="Records returned by the existing notification service." action={<Link to={ROUTES.dashboard.notifications} className="text-link">View all <ArrowRight size={16} /></Link>} />
         {unread.length === 0 ? <EmptyState title="You are up to date" description="No unread operational notification is present." /> : (
           <div className="alert-strip">{unread.slice(0, 4).map((item) => <article key={item.id}><BellRing size={18} /><div><strong>{item.message}</strong><span>{formatRelative(item.createdAt)}</span></div></article>)}</div>
         )}

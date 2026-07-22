@@ -45,7 +45,7 @@ export const BrandLogo = ({ size = 32, className = '' }: { size?: number; classN
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="font-extrabold tracking-tight text-white"
+        className="font-extrabold tracking-tight text-[var(--text-primary)]"
         style={{ fontSize: size * 0.65, lineHeight: 1 }}
       >
         Netrak

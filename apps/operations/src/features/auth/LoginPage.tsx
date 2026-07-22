@@ -6,6 +6,7 @@ import { authRepository } from '@/data/repositories';
 import { useAuth } from './AuthContext';
 import { BrandLogo } from '@/components/BrandLogo';
 import { motion } from 'framer-motion';
+import { ROUTES } from '@/app/routes';
 
 type Mode = 'sign-in' | 'register';
 
@@ -21,7 +22,7 @@ export function LoginPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={ROUTES.dashboard.overview} replace />;
 
   const chooseMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -50,7 +51,7 @@ export function LoginPage() {
           logout();
           setError('Citizen accounts use Netrak Mobile. This workspace is for provisioned officer and administrator accounts.');
         } else {
-          navigate('/dashboard', { replace: true });
+          navigate(ROUTES.dashboard.overview, { replace: true });
         }
       }
     } catch (reason) {
@@ -65,7 +66,7 @@ export function LoginPage() {
     <section className="relative flex-1 p-8 md:p-16 lg:p-24 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/10 overflow-hidden bg-[#0A0E17]/50">
       <div className="absolute inset-0 bg-gradient-to-br from-[#00E5FF]/5 via-transparent to-transparent pointer-events-none" />
       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '3rem 3rem' }} />
-      <div className="relative z-10 flex flex-col items-start gap-12"><Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"><ChevronLeft size={16} />Back to main site</Link><BrandLogo size={42} /></div>
+      <div className="relative z-10 flex flex-col items-start gap-12"><Link to={ROUTES.root} className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"><ChevronLeft size={16} />Back to main site</Link><BrandLogo size={42} /></div>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative z-10 max-w-xl mt-20 md:mt-0">
         <span className="inline-block mb-6 text-[#00E5FF] text-xs font-bold tracking-widest uppercase bg-[#00E5FF]/10 px-3 py-1 rounded-full border border-[#00E5FF]/30">Netrak access</span>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">One service.<br /><span className="text-gray-400">Different workspaces.</span></h1>

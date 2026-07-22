@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { tokenStorage } from '@/lib/apiClient';
 import { useAuth } from './AuthContext';
 import { NetrakLoader } from '@/components/NetrakLoader';
+import { ROUTES } from '@/app/routes';
 
 export function Callback() {
   const { hash } = useLocation();
@@ -12,7 +13,7 @@ export function Callback() {
 
   useEffect(() => {
     if (!hash) {
-      navigate('/login', { replace: true });
+      navigate(ROUTES.auth.login, { replace: true });
       return;
     }
 
@@ -28,12 +29,12 @@ export function Callback() {
     if (accessToken) {
       tokenStorage.set(accessToken);
       refreshProfile().then(() => {
-        navigate('/dashboard', { replace: true });
+        navigate(ROUTES.dashboard.overview, { replace: true });
       }).catch(() => {
-        navigate('/login', { replace: true });
+        navigate(ROUTES.auth.login, { replace: true });
       });
     } else {
-      navigate('/login', { replace: true });
+      navigate(ROUTES.auth.login, { replace: true });
     }
   }, [hash, navigate, refreshProfile]);
 
@@ -42,7 +43,7 @@ export function Callback() {
       <main className="access-boundary">
         <h1>Authentication Error</h1>
         <p>{error}</p>
-        <button className="button button--primary" onClick={() => navigate('/login')}>Return to Sign In</button>
+        <button className="button button--primary" onClick={() => navigate(ROUTES.auth.login)}>Return to Sign In</button>
       </main>
     );
   }

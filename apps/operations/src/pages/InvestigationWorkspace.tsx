@@ -6,6 +6,7 @@ import { useCase, useCaseActions, useThreats } from '@/data/queries';
 import { formatDate, inferRisk, safeReference, titleCase } from '@/lib/format';
 import { getErrorMessage, api } from '@/lib/apiClient';
 import type { CaseStatus, EvidenceType, CaseRecord } from '@/types';
+import { ROUTES } from '@/app/routes';
 
 export function InvestigationWorkspace() {
   const { id = '' } = useParams(); 
@@ -47,13 +48,12 @@ export function InvestigationWorkspace() {
     setCopilotInput('');
     
     try {
-      // Build context from case data
       const context = buildCaseContext(item);
       const prompt = `${context}\n\nOfficer question: ${copilotInput}`;
       
       const response = await api.post<{ text: string }>('/ai/chat', { messages: [{ role: 'user', content: prompt }] });
       setCopilotMessages(prev => [...prev, { role: 'assistant', content: response.text }]);
-    } catch (err) {
+    } catch {
       setCopilotMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
     } finally {
       setCopilotLoading(false);
@@ -68,7 +68,7 @@ export function InvestigationWorkspace() {
   
   return (
     <>
-      <Link className="back-link" to="/cases"><ArrowLeft size={16} /> Back to case queue</Link>
+      <Link className="back-link" to={ROUTES.dashboard.cases}><ArrowLeft size={16} /> Back to case queue</Link>
       <PageHeader eyebrow={`Case · ${item.id}`} title={item.title} description={item.description} actions={<div className="header-badges"><RiskBadge value={inferRisk(item)} /><RiskBadge value={item.status} /></div>} />
       {error && <div className="form-error" role="alert">{error}</div>}
       
@@ -246,7 +246,7 @@ export function InvestigationWorkspace() {
             ) : (
               <div className="compact-list">
                 {related.map((threat) => (
-                  <Link to={`/intelligence?threat=${threat.id}`} key={threat.id}>
+                  <Link to={`${ROUTES.dashboard.intelligence}?threat=${threat.id}`} key={threat.id}>
                     <div><strong>{threat.title}</strong><span>{threat.region}</span></div>
                     <RiskBadge value={threat.level} />
                   </Link>
