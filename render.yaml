@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: netrak-gateway
+    env: node
+    plan: starter
+    buildCommand: npm run install:all && npm run build:gateway
+    startCommand: cd backend/gateway && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
